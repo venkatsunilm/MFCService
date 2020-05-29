@@ -1,0 +1,23 @@
+<accessibility-service xmlns:android="http://schemas.android.com/apk/res/android"
+    android:accessibilityEventTypes="typeAllMask|typeViewSelected
+    |typeViewAccessibilityFocused|typeViewClicked|typeViewFocused"
+    android:accessibilityFeedbackType="feedbackGeneric"
+    android:accessibilityFlags="flagReportViewIds|flagDefault
+    |flagRequestFilterKeyEvents|flagRetrieveInteractiveWindows|flagRequestAccessibilityButton"
+    android:canPerformGestures="true"
+    android:canRequestFilterKeyEvents="true"
+    android:canRetrieveWindowContent="true"
+    android:description="@string/accessibility_service_description"
+    android:summary="@string/switch_access_service_summary"
+    android:settingsActivity="com.google.android.accessibility.switchaccess.SwitchAccessPreferenceActivity"
+    />
+
+<!--    android:supportsSwitchingToNextInputMethod="true"-->
+<!--    android:isDefault="true"-->
+
+    <!--    android:settingsActivity="com.example.android.accessibility.ServiceSettingsActivity"-->
+    <!--    android:accessibilityFlags="flagDefault"
+    android:packageNames="com.gm.hmi.switchaccess"-->
+    <!--        android:accessibilityEventTypes="typeViewClicked|typeViewFocused|typeContextClicked|typeViewAccessibilityFocused
+    |typeViewHoverEnter|typeViewSelected"-->
+
