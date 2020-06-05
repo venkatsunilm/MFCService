@@ -25,9 +25,12 @@ import androidx.core.view.accessibility.AccessibilityNodeInfoCompat;
 
 import com.gm.hmi.mfc.GlobalConstants;
 import com.gm.hmi.mfc.SwitchAccessNodeCompat;
+import com.gm.hmi.mfc.helper.ConverterHelper;
 
 import java.util.ArrayList;
+import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
 
 /**
  * Base class for tree building. Includes some common utility methods.
@@ -35,7 +38,11 @@ import java.util.List;
 public abstract class TreeBuilder {
 
     final AccessibilityService service;
-    public static ArrayList<AccessibilityNodeInfoCompat> childNodes = new ArrayList<>();
+    private static final String APPTRAYNAVWINDOWFRAMEVIEWIENDTEXT = "navigation_bar_frame";
+
+    public static Map<String, AccessibilityNodeInfoCompat> currentScreenNodes = new HashMap<>();
+    public static Map<String, AccessibilityNodeInfoCompat> appTrayNavNodes = new HashMap();
+    private static int windowsIndex = -1;
 
     TreeBuilder(AccessibilityService service) {
         this.service = service;
@@ -61,7 +68,16 @@ public abstract class TreeBuilder {
      * @return The nodes in {@code root}'s subtree (including root) in the order TalkBack would
      * traverse them.
      */
+
+//                    if (child.getViewIdResourceName() != null
+//                            && child.getViewIdResourceName().toString().equals(GlobalConstants.AOSP_PLAY_PAUSE)) {
+//        GlobalConstants.currentNodeCompat_AOSP_PLAY_PAUSE = AccessibilityNodeInfoCompat.obtain(child);
+//        Log.i(GlobalConstants.LOGTAG, "currentNodeCompat_AOSP_PLAY_PAUSE" + GlobalConstants.currentNodeCompat_AOSP_PLAY_PAUSE);
+//    }
+//
     public static /*LinkedList<SwitchAccessNodeCompat>*/ void getNodesInTalkBackOrder(SwitchAccessNodeCompat root) {
+
+        windowsIndex++;
         // Compute windows above this one. Used for cropping node bounds. Filter out any windows
         // that have ButtonSwitchAccessIgnores as the only child of a root view. Any windows that
         // contain only these buttons should not be considered when creating the visible views.
@@ -82,85 +98,46 @@ public abstract class TreeBuilder {
             }
             windowsAboveFiltered.add(window);
         }
+
+//        Log.i(GlobalConstants.LOGTAG, "windowsAboveFiltered: " + windowsAboveFiltered);
+//        Log.i(GlobalConstants.LOGTAG, "root view id: " + root.getViewIdResourceName());
+//        Log.i(GlobalConstants.LOGTAG, "root view id: " + root.getWindowId());
+//        Log.i(GlobalConstants.LOGTAG, "root view id: " + root.getWindow());
+
         int childCount = root.getChildCount();
-        Log.i(GlobalConstants.LOGTAG, "AccessibilityNodeInfoCompat childCount: " + childCount);
-        AccessibilityNodeInfoCompat child = null;
+//        Log.i(GlobalConstants.LOGTAG, "AccessibilityNodeInfoCompat childCount: " + childCount);
+        AccessibilityNodeInfoCompat firstChild = null;
         AccessibilityNodeInfoCompat secondchild = null;
         for (int i = 0; i < childCount; i++) {
             try {
-                child = root.getChild(i);
-                childNodes.add(child);
-                Log.i(GlobalConstants.LOGTAG, "AccessibilityNodeInfoCompat firstChild: " + i + " :" + child);
-                // TODO: For now to test, the objects are forcely stores in test sample variales
-                if (child.getText() != null && child.getText().toString().equals(GlobalConstants.HOMETEXT)) {
-                    GlobalConstants.currentNodeCompat_homeButton = AccessibilityNodeInfoCompat.obtain(child);
+                firstChild = root.getChild(i);
+                if (firstChild.getViewIdResourceName() != null && windowsIndex == 1) {
+                    currentScreenNodes.put(
+                            ConverterHelper.getViewIdFromResourceViewId(
+                                    firstChild.getViewIdResourceName()),
+                            firstChild);
+                    Log.i(GlobalConstants.LOGTAG, "firstChild getViewIdResourceName: "
+                            + i + " :" + ConverterHelper.getViewIdFromResourceViewId(
+                            firstChild.getViewIdResourceName()));
+//                    Log.i(GlobalConstants.LOGTAG, "firstChild getText: " + i + " :" + child.getText());
                 }
-                if (child.getText() != null && child.getText().toString().equals(GlobalConstants.MUSICTEXT)) {
-                    GlobalConstants.currentNodeCompat_musicButton = AccessibilityNodeInfoCompat.obtain(child);
-                }
-                if (child.getText() != null && child.getText().toString().equals(GlobalConstants.PHONETEXT)) {
-                    GlobalConstants.currentNodeCompat_phoneButton = AccessibilityNodeInfoCompat.obtain(child);
-                }
-                if (child.getText() != null && child.getText().toString().equals(GlobalConstants.PREVTEXT)) {
-                    GlobalConstants.currentNodeCompat_previousButton = AccessibilityNodeInfoCompat.obtain(child);
-                }
-                if (child.getText() != null && child.getText().toString().equals(GlobalConstants.PLAYPAUSETEXT)) {
-                    GlobalConstants.currentNodeCompat_playPauseButton = AccessibilityNodeInfoCompat.obtain(child);
-                }
-                if (child.getText() != null && child.getText().toString().equals(GlobalConstants.TEDTEXT)) {
-                    GlobalConstants.currentNodeCompat_TEDradioHourButton = AccessibilityNodeInfoCompat.obtain(child);
-                }
-                if (child.getText() != null && child.getText().toString().equals(GlobalConstants.MIN36TEXT)) {
-                    GlobalConstants.currentNodeCompat_MIN36 = AccessibilityNodeInfoCompat.obtain(child);
-                    Log.i(GlobalConstants.LOGTAG, "GlobalConstants.currentNodeCompat_MIN36: " + GlobalConstants.currentNodeCompat_MIN36);
-                }
-
-                if (child.getViewIdResourceName() != null
-                        && child.getViewIdResourceName().toString().equals(GlobalConstants.AOSP_PLAY_PAUSE)) {
-                    GlobalConstants.currentNodeCompat_AOSP_PLAY_PAUSE = AccessibilityNodeInfoCompat.obtain(child);
-                    Log.i(GlobalConstants.LOGTAG, "currentNodeCompat_AOSP_PLAY_PAUSE" + GlobalConstants.currentNodeCompat_AOSP_PLAY_PAUSE);
-
-                }
-
-                int subChildCount = child.getChildCount();
+                int subChildCount = firstChild.getChildCount();
                 for (int j = 0; j < subChildCount; j++) {
-                    secondchild = child.getChild(j);
-                    if (secondchild.getContentDescription() != null
-                            && secondchild.getContentDescription().toString().equals(GlobalConstants.BACKTEXT)) {
-                        GlobalConstants.currentNodeCompat_BackMain = AccessibilityNodeInfoCompat.obtain(secondchild);
-                    }
-                    if (secondchild.getContentDescription() != null
-                            && secondchild.getContentDescription().toString().equals(GlobalConstants.HOMETEXT)) {
-                        GlobalConstants.currentNodeCompat_HomeMain = AccessibilityNodeInfoCompat.obtain(secondchild);
-                    }
-                    if (secondchild.getContentDescription() != null
-                            && secondchild.getContentDescription().toString().equals(GlobalConstants.OVERVIEWTEXT)) {
-                        GlobalConstants.currentNodeCompat_OverviewMain = AccessibilityNodeInfoCompat.obtain(secondchild);
-                    }
+                    if (root.getViewIdResourceName() != null
+                            && root.getViewIdResourceName().endsWith(APPTRAYNAVWINDOWFRAMEVIEWIENDTEXT)) {
+                        secondchild = firstChild.getChild(j);
+                        appTrayNavNodes.put(
+                                ConverterHelper.getViewIdFromResourceViewId(
+                                        secondchild.getViewIdResourceName()),
+                                secondchild);
 
-                    if (secondchild.getViewIdResourceName() != null
-                            && secondchild.getViewIdResourceName().toString().equals(GlobalConstants.AOSP_MUSIC)) {
-                        GlobalConstants.currentNodeCompat_AOSP_MUSIC = AccessibilityNodeInfoCompat.obtain(secondchild);
-                        Log.i(GlobalConstants.LOGTAG, "currentNodeCompat_AOSP_MUSIC" + GlobalConstants.currentNodeCompat_AOSP_MUSIC);
+//                        Log.i(GlobalConstants.LOGTAG, "secondchild getViewIdResourceName: " + i + " :" + secondchild.getViewIdResourceName());
+//                        Log.i(GlobalConstants.LOGTAG, "secondchild getText: " + i + " :" + secondchild.getText());
+//                        Log.i(GlobalConstants.LOGTAG, "secondchild getClassName: " + i + " :" + secondchild.getClassName());
 
                     }
 
-                    if (secondchild.getViewIdResourceName() != null
-                            && secondchild.getViewIdResourceName().toString().equals(GlobalConstants.HMI_THREE)) {
-                        GlobalConstants.currentNodeCompat_HMI_THREE = AccessibilityNodeInfoCompat.obtain(secondchild);
-                        Log.i(GlobalConstants.LOGTAG, "currentNodeCompat_HMI_THREE" + GlobalConstants.currentNodeCompat_HMI_THREE);
-
-                    }
-
-                    if (secondchild.getViewIdResourceName() != null
-                            && secondchild.getViewIdResourceName().toString().equals(GlobalConstants.HMI_TWO)) {
-                        GlobalConstants.currentNodeCompat_HMI_TWO = AccessibilityNodeInfoCompat.obtain(secondchild);
-                        Log.i(GlobalConstants.LOGTAG, "currentNodeCompat_HMI_TWO" + GlobalConstants.currentNodeCompat_HMI_TWO);
-
-                    }
-
-
-                    Log.i(GlobalConstants.LOGTAG, "AccessibilityNodeInfoCompat secondchild: " + j + " :" + secondchild);
+//                    Log.i(GlobalConstants.LOGTAG, "AccessibilityNodeInfoCompat second Child: " + j + " :" + secondchild);
 
                 }
 //                Rect bounds = getBoundsInternal(child);
@@ -189,6 +166,22 @@ public abstract class TreeBuilder {
 //    traversalController.recycle();
 //    return outList;
         }
+
+        Log.i(GlobalConstants.LOGTAG, "appTrayNavNodes: " + appTrayNavNodes.size());
+        Log.i(GlobalConstants.LOGTAG, "currentScreenNodes: " + currentScreenNodes.size());
+//        Log.i(GlobalConstants.LOGTAG, "appTrayNavNodes: " + appTrayNavNodes);
+//        Log.i(GlobalConstants.LOGTAG, "currentScreenNodes: " + currentScreenNodes);
+        Log.i(GlobalConstants.LOGTAG, "windowsIndex: " + windowsIndex);
+
+        if (windowsIndex == 2) {
+            windowsIndex = -1;
+        }
+
+
+    }
+
+    private static void setFocusToFirstnode() {
+        currentScreenNodes.get("0").performAction(AccessibilityNodeInfoCompat.ACTION_FOCUS);
     }
 
 //        private Rect getBoundsInternal (AccessibilityNodeInfoCompat node){

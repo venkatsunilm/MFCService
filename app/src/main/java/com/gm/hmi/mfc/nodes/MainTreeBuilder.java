@@ -31,7 +31,11 @@ public class MainTreeBuilder {
 
             for (SwitchAccessWindowInfo window : wList) {
                 Log.i(GlobalConstants.LOGTAG, "window: " + window);
+                //
                 SwitchAccessNodeCompat windowRoot = window.getRoot();
+
+                Log.i(GlobalConstants.LOGTAG, "windowRoot: " + windowRoot);
+
                 if (windowRoot != null) {
                     addViewHierarchyToTree(windowRoot);
                 }
