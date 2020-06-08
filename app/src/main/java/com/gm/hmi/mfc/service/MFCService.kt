@@ -7,23 +7,26 @@ import android.view.KeyEvent
 import android.view.accessibility.AccessibilityEvent
 import android.view.accessibility.AccessibilityNodeInfo
 import androidx.core.view.accessibility.AccessibilityNodeInfoCompat
-import com.gm.hmi.mfc.GlobalConstants
-import com.gm.hmi.mfc.SwitchAccessWindowInfo
+import com.gm.hmi.mfc.constants.GlobalConstants
+import com.gm.hmi.mfc.nodes.WindowInfo
 import com.gm.hmi.mfc.helper.ConverterHelper
 import com.gm.hmi.mfc.helper.MockData
 import com.gm.hmi.mfc.helper.NavigationHelperData
-import com.gm.hmi.mfc.nodes.MainTreeBuilder
-import com.gm.hmi.mfc.nodes.TreeBuilder
-import com.gm.hmi.mfc.util.AccessibilityServiceCompatUtils
-import com.gm.hmi.mfc.util.UiChangeDetector
+import com.gm.hmi.mfc.nodes.MainNodesBuilder
+import com.gm.hmi.mfc.nodes.NodesBuilder
+import com.gm.hmi.mfc.util.ServiceUtils
+import com.gm.hmi.mfc.events.EventUpdator
 
+/**
+ * Main service class to use Accessibility feature
+ */
 public class MFCService : AccessibilityService() {
 
     private var previousViewId: String? = ""
     private var savePreviousAppViewId: String? = ""
     private var isFocusOnAppTray: Boolean = false
     private lateinit var data_mock: MutableMap<String, NavigationHelperData>
-    private lateinit var eventProcessor: UiChangeDetector
+    private lateinit var eventProcessor: EventUpdator
     private var localIndexAppTray = 0;
 
     companion object {
@@ -38,7 +41,7 @@ public class MFCService : AccessibilityService() {
         // test mock data initiate
         MockData()
         data_mock = MockData.getNavigationMap()
-        eventProcessor = UiChangeDetector()
+        eventProcessor = EventUpdator()
 
         Handler().postDelayed({
             buildTree()
@@ -64,13 +67,13 @@ public class MFCService : AccessibilityService() {
     }
 
     fun buildTree() {
-        MainTreeBuilder(this).addWindowListToTree(
-            SwitchAccessWindowInfo.convertZOrderWindowList(
-                AccessibilityServiceCompatUtils.getWindows(this)
+        MainNodesBuilder(this).addWindowList(
+            WindowInfo.convertWindowArrayOrder(
+                ServiceUtils.getWindows(this)
             )
         )
 
-        TreeBuilder.setFocusToFirstnode();
+        NodesBuilder.setFocusToFirstnode();
     }
 
     override fun onKeyEvent(event: KeyEvent?): Boolean {
@@ -79,7 +82,7 @@ public class MFCService : AccessibilityService() {
             return false
         }
         val currentFocusedNode =
-            AccessibilityServiceCompatUtils.getInputFocusedNode(this)
+            ServiceUtils.getInputFocusedNode(this)
 
         if (currentFocusedNode == null) {
             return false
@@ -102,10 +105,10 @@ public class MFCService : AccessibilityService() {
                 if (GlobalConstants.isFocusOnSystemAppTray) {
                     GlobalConstants.isFocusOnSystemAppTray = false
 
-                    TreeBuilder.appTrayNavNodes[(savePreviousAppViewId)]
+                    NodesBuilder.appTrayNavNodes[(savePreviousAppViewId)]
                         ?.performAction(AccessibilityNodeInfoCompat.ACTION_CLEAR_FOCUS)
 
-                    TreeBuilder.appTrayNavNodes[(savePreviousAppViewId)]
+                    NodesBuilder.appTrayNavNodes[(savePreviousAppViewId)]
                         ?.performAction(AccessibilityNodeInfoCompat.ACTION_FOCUS)
                     return super.onKeyEvent(event)
                 }
@@ -142,7 +145,7 @@ public class MFCService : AccessibilityService() {
             }
         }
         if (!GlobalConstants.isFocusOnSystemAppTray
-            && TreeBuilder.appTrayIdList.contains(
+            && NodesBuilder.appTrayIdList.contains(
                 ConverterHelper.getViewIdFromResourceViewId(currentViewId)
             )
             && directionIndex == 3
@@ -151,19 +154,19 @@ public class MFCService : AccessibilityService() {
         }
 
         if (!GlobalConstants.isFocusOnSystemAppTray
-            && !TreeBuilder.appTrayNavNodes.containsKey(currentViewId)
+            && !NodesBuilder.appTrayNavNodes.containsKey(currentViewId)
         ) {
-            TreeBuilder.currentScreenNodes[(currentViewId)]
+            NodesBuilder.currentScreenNodes[(currentViewId)]
                 ?.performAction(AccessibilityNodeInfoCompat.ACTION_FOCUS)
             savePreviousAppViewId = currentViewId
 
         } else {
             if (!savePreviousAppViewId.isNullOrEmpty()) {
-                val id = TreeBuilder.appTrayIdList.get(localIndexAppTray)
-                TreeBuilder.appTrayNavNodes[(id)]
+                val id = NodesBuilder.appTrayIdList.get(localIndexAppTray)
+                NodesBuilder.appTrayNavNodes[(id)]
                     ?.performAction(AccessibilityNodeInfoCompat.ACTION_FOCUS)
             } else {
-                TreeBuilder.appTrayNavNodes[(currentViewId)]
+                NodesBuilder.appTrayNavNodes[(currentViewId)]
                     ?.performAction(AccessibilityNodeInfoCompat.ACTION_FOCUS)
             }
         }
@@ -189,8 +192,8 @@ public class MFCService : AccessibilityService() {
         if (GlobalConstants.isFocusOnSystemAppTray) {
             if (value) {
                 localIndexAppTray++
-                if (localIndexAppTray >= TreeBuilder.appTrayIdList.size) {
-                    localIndexAppTray = TreeBuilder.appTrayIdList.size - 1
+                if (localIndexAppTray >= NodesBuilder.appTrayIdList.size) {
+                    localIndexAppTray = NodesBuilder.appTrayIdList.size - 1
                 }
             } else {
                 localIndexAppTray--
@@ -201,11 +204,11 @@ public class MFCService : AccessibilityService() {
         }
 
         if (!GlobalConstants.isFocusOnSystemAppTray) {
-            TreeBuilder.currentScreenNodes[(currentViewId)]
+            NodesBuilder.currentScreenNodes[(currentViewId)]
                 ?.performAction(AccessibilityNodeInfoCompat.ACTION_FOCUS)
 
         } else {
-            TreeBuilder.appTrayNavNodes[(TreeBuilder.appTrayIdList[localIndexAppTray])]
+            NodesBuilder.appTrayNavNodes[(NodesBuilder.appTrayIdList[localIndexAppTray])]
                 ?.performAction(AccessibilityNodeInfoCompat.ACTION_FOCUS)
         }
 

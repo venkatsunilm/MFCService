@@ -1,4 +1,4 @@
-package com.gm.hmi.mfc;
+package com.gm.hmi.mfc.nodes;
 
 import android.graphics.Rect;
 import android.view.accessibility.AccessibilityNodeInfo;
@@ -10,20 +10,20 @@ import java.util.List;
 /**
  * Extension of AccessibilityWindowInfo that returns {@code ExtendedNodeCompat} for its root
  */
-public class SwitchAccessWindowInfo {
+public class WindowInfo {
     private final AccessibilityWindowInfo accessibilityWindowInfo;
     private final List<AccessibilityWindowInfo> listOfWindowsAbove;
 
-    public static List<SwitchAccessWindowInfo> convertZOrderWindowList(
+    public static List<WindowInfo> convertWindowArrayOrder(
             List<AccessibilityWindowInfo> originalList) {
-        List<SwitchAccessWindowInfo> newList = new ArrayList<>(originalList.size());
+        List<WindowInfo> newList = new ArrayList<>(originalList.size());
         for (int i = 0; i < originalList.size(); i++) {
-            newList.add(new SwitchAccessWindowInfo(originalList.get(i), originalList.subList(0, i)));
+            newList.add(new WindowInfo(originalList.get(i), originalList.subList(0, i)));
         }
         return newList;
     }
 
-    public SwitchAccessWindowInfo(
+    public WindowInfo(
             AccessibilityWindowInfo accessibilityWindowInfo,
             List<AccessibilityWindowInfo> listOfWindowsAbove) {
         if (accessibilityWindowInfo == null) {
@@ -33,14 +33,14 @@ public class SwitchAccessWindowInfo {
         this.listOfWindowsAbove = listOfWindowsAbove;
     }
 
-    public SwitchAccessNodeCompat getRoot() {
+    public NodeInfo getRoot() {
         AccessibilityNodeInfo root = null;
         try {
             root = accessibilityWindowInfo.getRoot();
         } catch (NullPointerException | SecurityException | StackOverflowError e) {
             // If the framework throws an exception, ignore.
         }
-        return (root == null) ? null : new SwitchAccessNodeCompat(root, listOfWindowsAbove);
+        return (root == null) ? null : new NodeInfo(root, listOfWindowsAbove);
     }
 
     public int getType() {

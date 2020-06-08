@@ -4,48 +4,45 @@ import android.accessibilityservice.AccessibilityService;
 import android.graphics.Rect;
 import android.view.accessibility.AccessibilityWindowInfo;
 
-import com.gm.hmi.mfc.SwitchAccessNodeCompat;
-import com.gm.hmi.mfc.SwitchAccessWindowInfo;
-
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.Comparator;
 import java.util.List;
 
-public class MainTreeBuilder {
+public class MainNodesBuilder {
 
     private AccessibilityService service;
 
-    public MainTreeBuilder(AccessibilityService service) {
+    public MainNodesBuilder(AccessibilityService service) {
         this.service = service;
     }
 
-    public void addWindowListToTree(List<SwitchAccessWindowInfo> windowList) {
+    public void addWindowList(List<WindowInfo> windowList) {
         if (windowList != null) {
-            TreeBuilder.resetAll();
-            List<SwitchAccessWindowInfo> wList = new ArrayList<>(windowList);
-            sortWindowListForTraversalOrder(wList);
-            for (SwitchAccessWindowInfo window : wList) {
-                SwitchAccessNodeCompat windowRoot = window.getRoot();
+            NodesBuilder.resetAll();
+            List<WindowInfo> wList = new ArrayList<>(windowList);
+            sortWindowList(wList);
+            for (WindowInfo window : wList) {
+                NodeInfo windowRoot = window.getRoot();
                 if (windowRoot != null) {
-                    addViewHierarchyToTree(windowRoot);
+                    addViews(windowRoot);
                 }
             }
         }
     }
 
-    public void addViewHierarchyToTree(
-            SwitchAccessNodeCompat root) {
-        TreeBuilder.getNodesInTalkBackOrder(root);
+    public void addViews(
+            NodeInfo root) {
+        NodesBuilder.getNodes(root);
     }
 
 
-    private static void sortWindowListForTraversalOrder(List<SwitchAccessWindowInfo> windowList) {
+    private static void sortWindowList(List<WindowInfo> windowList) {
         Collections.sort(
                 windowList,
-                new Comparator<SwitchAccessWindowInfo>() {
+                new Comparator<WindowInfo>() {
                     @Override
-                    public int compare(SwitchAccessWindowInfo arg0, SwitchAccessWindowInfo arg1) {
+                    public int compare(WindowInfo arg0, WindowInfo arg1) {
 
                         /* Present IME windows first */
                         final int type0 = arg0.getType();

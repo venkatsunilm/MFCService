@@ -1,19 +1,19 @@
-package com.gm.hmi.mfc.util;
+package com.gm.hmi.mfc.events;
 
 import android.view.accessibility.AccessibilityEvent;
 
 import androidx.annotation.Nullable;
 
-import com.gm.hmi.mfc.AccessibilityEventListener;
-
 
 /**
  * Class to detect possible changes to the UI based on AccessibilityEvents
  */
-public class UiChangeDetector implements AccessibilityEventListener {
+public class EventUpdator implements EventListener {
 
     /**
-     * Event types that are handled by UiChangeDetector.
+     * Event types that are handled by EventUpdator.
+     *
+     * //TODO: few are not used ATM, remove in future as per requirement
      */
     private static final int MASK_EVENTS_HANDLED_BY_UI_CHANGE_DETECTOR =
             AccessibilityEvent.TYPE_WINDOW_STATE_CHANGED
@@ -21,10 +21,10 @@ public class UiChangeDetector implements AccessibilityEventListener {
                     | AccessibilityEvent.TYPE_VIEW_SCROLLED
                     | AccessibilityEvent.TYPE_WINDOW_CONTENT_CHANGED;
 
-    private final PossibleUiChangeListener listener;
+    private final onScreenUpdateListener listener;
 
-    public UiChangeDetector() {
-        this.listener = new UiChangeStabilizer();
+    public EventUpdator() {
+        this.listener = new EventActions();
     }
 
     @Override
@@ -52,7 +52,7 @@ public class UiChangeDetector implements AccessibilityEventListener {
         }
 
         if (willClearFocus) {
-            listener.onPossibleChangeToUi(event);
+            listener.onScreenUpdate(event);
         }
     }
 
@@ -60,8 +60,8 @@ public class UiChangeDetector implements AccessibilityEventListener {
      * Listener that is notified when an Accessibility event might have caused the UI to
      * change.
      */
-    public interface PossibleUiChangeListener {
-        void onPossibleChangeToUi(@Nullable AccessibilityEvent event);
+    public interface onScreenUpdateListener {
+        void onScreenUpdate(@Nullable AccessibilityEvent event);
     }
 }
 

@@ -1,4 +1,4 @@
-package com.gm.hmi.mfc.util;
+package com.gm.hmi.mfc.helper;
 
 import android.accessibilityservice.AccessibilityService;
 import android.content.Context;
@@ -10,12 +10,14 @@ import android.view.accessibility.AccessibilityWindowInfo;
 import androidx.annotation.Nullable;
 import androidx.core.view.accessibility.AccessibilityNodeInfoCompat;
 
+import com.gm.hmi.mfc.util.ServiceUtils;
+
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.Comparator;
 import java.util.List;
 
-public class WindowManager {
+public class windowHelper {
 
     public static final int WRONG_WINDOW_TYPE = -1;
     private static final int WRONG_INDEX = -1;
@@ -49,13 +51,13 @@ public class WindowManager {
         }
     }
 
-    public WindowManager(boolean isInRTL) {
+    public windowHelper(boolean isInRTL) {
         mIsInRTL = isInRTL;
     }
 
-    public WindowManager(AccessibilityService service) {
+    public windowHelper(AccessibilityService service) {
         mIsInRTL = isScreenLayoutRTL(service);
-        setWindows(AccessibilityServiceCompatUtils.getWindows(service));
+        setWindows(ServiceUtils.getWindows(service));
     }
 
     public static boolean isScreenLayoutRTL(Context context) {
@@ -68,7 +70,7 @@ public class WindowManager {
     }
 
     /**
-     * Set windows that would be used by WindowManager
+     * Set windows that would be used by windowHelper
      *
      * @param windows Set the windows on the screen.
      */
@@ -249,11 +251,6 @@ public class WindowManager {
                 && mWindows.get(lastIndex).getType() == AccessibilityWindowInfo.TYPE_SYSTEM;
     }
 
-    /**
-     * @return window that is next relatively currently accessibilityFocused window. If there is no
-     * accessibility focused window it returns first window that has TYPE_APPLICATION or null if
-     * there is no window with TYPE_APPLICATION type
-     */
     public @Nullable
     AccessibilityWindowInfo getNextWindow(AccessibilityWindowInfo pivotWindow) {
         return getWindow(pivotWindow, NEXT);

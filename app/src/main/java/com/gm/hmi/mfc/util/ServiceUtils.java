@@ -8,10 +8,12 @@ import android.view.accessibility.AccessibilityWindowInfo;
 import androidx.annotation.Nullable;
 import androidx.core.view.accessibility.AccessibilityNodeInfoCompat;
 
+import com.gm.hmi.mfc.helper.windowHelper;
+
 import java.util.Collections;
 import java.util.List;
 
-public class AccessibilityServiceCompatUtils {
+public class ServiceUtils {
 
     private static final String TAG = "Venk";
 
@@ -24,7 +26,7 @@ public class AccessibilityServiceCompatUtils {
         if (root == null) {
             return null;
         }
-        return AccessibilityNodeInfoUtils.toCompat(root);
+        return NodeUtils.toCompat(root);
     }
 
     public static List<AccessibilityWindowInfo> getWindows(AccessibilityService service) {
@@ -54,13 +56,13 @@ public class AccessibilityServiceCompatUtils {
 
         AccessibilityNodeInfo focusedRoot = null;
         List<AccessibilityWindowInfo> windows = getWindows(service);
-        WindowManager manager = new WindowManager(false);
+        windowHelper manager = new windowHelper(false);
         manager.setWindows(windows);
         AccessibilityWindowInfo accessibilityFocusedWindow =
                 manager.getCurrentWindow(false);
 
         if (accessibilityFocusedWindow != null) {
-            focusedRoot = AccessibilityWindowInfoUtils.getRoot(accessibilityFocusedWindow);
+            focusedRoot = WindowUtils.getRoot(accessibilityFocusedWindow);
         }
 
         if (focusedRoot == null) {
@@ -71,7 +73,7 @@ public class AccessibilityServiceCompatUtils {
             return null;
         }
 
-        return AccessibilityNodeInfoUtils.toCompat(focusedRoot);
+        return NodeUtils.toCompat(focusedRoot);
     }
 
     public static AccessibilityWindowInfo getActiveWidow(AccessibilityService service) {
@@ -83,13 +85,12 @@ public class AccessibilityServiceCompatUtils {
         if (rootInActiveWindow == null) {
             return null;
         }
-        AccessibilityWindowInfo window = AccessibilityNodeInfoUtils.getWindow(rootInActiveWindow);
+        AccessibilityWindowInfo window = NodeUtils.getWindow(rootInActiveWindow);
         rootInActiveWindow.recycle();
         return window;
     }
 
     public static AccessibilityNodeInfoCompat getInputFocusedNode(AccessibilityService service) {
-        // TODO: Shall we use active window or accessibility focused window?
         AccessibilityNodeInfoCompat activeRoot = getRootInActiveWindow(service);
         if (activeRoot != null) {
             try {
@@ -102,7 +103,6 @@ public class AccessibilityServiceCompatUtils {
     }
 
     public static AccessibilityNodeInfoCompat getInputAcceeFocusedNode(AccessibilityService service) {
-        // TODO: Shall we use active window or accessibility focused window?
         AccessibilityNodeInfoCompat activeRoot = getRootInActiveWindow(service);
         if (activeRoot != null) {
             try {

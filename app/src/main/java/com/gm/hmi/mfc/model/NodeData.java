@@ -5,7 +5,9 @@ import androidx.core.view.accessibility.AccessibilityNodeInfoCompat;
 import java.util.ArrayList;
 
 /**
- * This class is
+ * This class holds the Node data based on window id
+ *
+ * TODO: As of now this is not in use, will use in future as per requirement
  */
 public class NodeData {
 

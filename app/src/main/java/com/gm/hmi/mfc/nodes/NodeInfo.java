@@ -1,4 +1,4 @@
-package com.gm.hmi.mfc;
+package com.gm.hmi.mfc.nodes;
 
 import android.view.accessibility.AccessibilityWindowInfo;
 
@@ -11,16 +11,11 @@ import java.util.List;
 /**
  * This is an extension class for AccessibilityNodeInfoCompat
  */
-public class SwitchAccessNodeCompat extends AccessibilityNodeInfoCompat {
+public class NodeInfo extends AccessibilityNodeInfoCompat {
 
     private final List<AccessibilityWindowInfo> windowsAbove;
 
-    /**
-     * @param info         The info to wrap
-     * @param windowsAbove The windows sitting on top of the current one. This list is used to compute
-     *                     visibility.
-     */
-    public SwitchAccessNodeCompat(Object info, List<AccessibilityWindowInfo> windowsAbove) {
+    public NodeInfo(Object info, List<AccessibilityWindowInfo> windowsAbove) {
         super(info);
         if (info == null) {
             throw new NullPointerException();
@@ -30,10 +25,5 @@ public class SwitchAccessNodeCompat extends AccessibilityNodeInfoCompat {
         } else {
             this.windowsAbove = new ArrayList<>(windowsAbove);
         }
-    }
-
-    /** @return An immutable copy of the current window list */
-    public List<AccessibilityWindowInfo> getWindowsAbove() {
-        return Collections.unmodifiableList(windowsAbove);
     }
 }

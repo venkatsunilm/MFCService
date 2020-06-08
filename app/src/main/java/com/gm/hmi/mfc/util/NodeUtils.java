@@ -7,7 +7,7 @@ import android.view.accessibility.AccessibilityWindowInfo;
 import androidx.annotation.Nullable;
 import androidx.core.view.accessibility.AccessibilityNodeInfoCompat;
 
-public class AccessibilityNodeInfoUtils {
+public class NodeUtils {
 
     private static final String TAG = "Venk";
 

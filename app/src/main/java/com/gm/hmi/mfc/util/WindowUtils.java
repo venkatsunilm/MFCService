@@ -6,7 +6,7 @@ import android.view.accessibility.AccessibilityWindowInfo;
 
 import androidx.annotation.Nullable;
 
-public class AccessibilityWindowInfoUtils {
+public class WindowUtils {
 
     private static final String TAG = "Venk";
 
@@ -21,7 +21,7 @@ public class AccessibilityWindowInfoUtils {
             nodeInfo = windowInfo.getRoot();
         } catch (SecurityException e) {
             Log.e(
-                    TAG, "SecurityException occurred at AccessibilityWindowInfoUtils#getRoot(): %s", e);
+                    TAG, "SecurityException occurred at WindowUtils#getRoot(): %s", e);
         }
         return nodeInfo;
     }

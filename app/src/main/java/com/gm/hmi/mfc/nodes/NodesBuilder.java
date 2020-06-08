@@ -2,42 +2,39 @@ package com.gm.hmi.mfc.nodes;
 
 import android.accessibilityservice.AccessibilityService;
 import android.util.Log;
-import android.view.accessibility.AccessibilityNodeInfo;
-import android.view.accessibility.AccessibilityWindowInfo;
+
 import androidx.core.view.accessibility.AccessibilityNodeInfoCompat;
-import com.gm.hmi.mfc.GlobalConstants;
-import com.gm.hmi.mfc.SwitchAccessNodeCompat;
+import com.gm.hmi.mfc.constants.GlobalConstants;
 import com.gm.hmi.mfc.helper.ConverterHelper;
-import java.util.ArrayList;
+
 import java.util.HashMap;
-import java.util.List;
 import java.util.Map;
 
 /**
- * Base class for tree building. Includes some common utility methods.
+ * Builds the nodes of system and application in seperate map list.
  */
-public abstract class TreeBuilder {
+public abstract class NodesBuilder {
 
     final AccessibilityService service;
     private static final String APPTRAYNAVWINDOWFRAMEVIEWIENDTEXT = "navigation_bar_frame";
 
+    // TODO: getters and setters, remove static
     public static Map<String, AccessibilityNodeInfoCompat> currentScreenNodes;
     public static Map<String, AccessibilityNodeInfoCompat> appTrayNavNodes;
     public static String[] appTrayIdList;
     private static String firstNodeViewId = "";
     public static int windowsIndex = -1;
 
-    TreeBuilder(AccessibilityService service) {
+    NodesBuilder(AccessibilityService service) {
         this.service = service;
     }
 
     /**
      * Obtains a list of nodes
      */
-    public static void getNodesInTalkBackOrder(SwitchAccessNodeCompat root) {
+    public static void getNodes(NodeInfo root) {
         windowsIndex++;
         int childCount = root.getChildCount();
-        Log.i(GlobalConstants.LOGTAG, "AccessibilityNodeInfoCompat childCount: " + childCount);
         AccessibilityNodeInfoCompat firstChild = null;
         AccessibilityNodeInfoCompat secondchild = null;
         for (int i = 0; i < childCount; i++) {

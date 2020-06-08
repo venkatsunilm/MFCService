@@ -1,11 +1,11 @@
-package com.gm.hmi.mfc;
+package com.gm.hmi.mfc.events;
 
 import android.view.accessibility.AccessibilityEvent;
 
 /**
  * Listener for a11 events.
  */
-public interface AccessibilityEventListener {
+public interface EventListener {
 
     int getEventTypes();
 
