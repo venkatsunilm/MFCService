@@ -10,9 +10,6 @@ public class AccessibilityWindowInfoUtils {
 
     private static final String TAG = "Venk";
 
-    /**
-     * Returns the root node of the tree of {@code windowInfo}.
-     */
     @Nullable
     public static AccessibilityNodeInfo getRoot(AccessibilityWindowInfo windowInfo) {
         AccessibilityNodeInfo nodeInfo = null;

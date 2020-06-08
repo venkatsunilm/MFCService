@@ -8,6 +8,9 @@ import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
 
+/**
+ * This is an extension class for AccessibilityNodeInfoCompat
+ */
 public class SwitchAccessNodeCompat extends AccessibilityNodeInfoCompat {
 
     private final List<AccessibilityWindowInfo> windowsAbove;

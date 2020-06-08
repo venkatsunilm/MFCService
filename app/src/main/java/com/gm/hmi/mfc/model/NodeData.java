@@ -4,6 +4,9 @@ import androidx.core.view.accessibility.AccessibilityNodeInfoCompat;
 
 import java.util.ArrayList;
 
+/**
+ * This class is
+ */
 public class NodeData {
 
     private String windowsViewId;

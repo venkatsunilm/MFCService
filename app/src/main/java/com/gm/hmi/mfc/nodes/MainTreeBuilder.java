@@ -2,18 +2,14 @@ package com.gm.hmi.mfc.nodes;
 
 import android.accessibilityservice.AccessibilityService;
 import android.graphics.Rect;
-import android.util.Log;
 import android.view.accessibility.AccessibilityWindowInfo;
 
-import com.gm.hmi.mfc.GlobalConstants;
 import com.gm.hmi.mfc.SwitchAccessNodeCompat;
 import com.gm.hmi.mfc.SwitchAccessWindowInfo;
-import com.gm.hmi.mfc.util.DisplayUtils;
 
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.Comparator;
-import java.util.Iterator;
 import java.util.List;
 
 public class MainTreeBuilder {
@@ -26,46 +22,24 @@ public class MainTreeBuilder {
 
     public void addWindowListToTree(List<SwitchAccessWindowInfo> windowList) {
         if (windowList != null) {
+            TreeBuilder.resetAll();
             List<SwitchAccessWindowInfo> wList = new ArrayList<>(windowList);
             sortWindowListForTraversalOrder(wList);
-
             for (SwitchAccessWindowInfo window : wList) {
-                Log.i(GlobalConstants.LOGTAG, "window: " + window);
-                //
                 SwitchAccessNodeCompat windowRoot = window.getRoot();
-
-                Log.i(GlobalConstants.LOGTAG, "windowRoot: " + windowRoot);
-
                 if (windowRoot != null) {
                     addViewHierarchyToTree(windowRoot);
                 }
-
             }
         }
     }
 
     public void addViewHierarchyToTree(
             SwitchAccessNodeCompat root) {
-//        TreeScanNode tree = (treeToBuildOn != null) ? treeToBuildOn : new ClearFocusNode();
-        /*LinkedList<SwitchAccessNodeCompat> talkBackOrderList =*/
         TreeBuilder.getNodesInTalkBackOrder(root);
-//        Iterator<SwitchAccessNodeCompat> reverseListIterator = talkBackOrderList.descendingIterator();
-//        while (reverseListIterator.hasNext()) {
-//            SwitchAccessNodeCompat next = reverseListIterator.next();
-//            tree = addCompatToTree(next, tree, includeNonActionableItems);
-//            next.recycle();
-//        }
-//        return tree;
     }
 
 
-    /**
-     * Sorts windows so that the IME is traversed first, followed by other windows top-to-bottom. Note
-     * that the list comes out backwards, which makes it easy to iterate through it when building the
-     * tree from the bottom up.
-     *
-     * @param windowList The list to be sorted.
-     */
     private static void sortWindowListForTraversalOrder(List<SwitchAccessWindowInfo> windowList) {
         Collections.sort(
                 windowList,
@@ -106,30 +80,4 @@ public class MainTreeBuilder {
                     }
                 });
     }
-
-    /*
-     * Removes items on the status bar from the window list.
-     */
-    private void removeStatusBarButtonsFromWindowList(List<SwitchAccessWindowInfo> windowList) {
-        int statusBarHeight = DisplayUtils.getStatusBarHeightInPixel(service);
-
-        final Iterator<SwitchAccessWindowInfo> windowIterator = windowList.iterator();
-        while (windowIterator.hasNext()) {
-            SwitchAccessWindowInfo window = windowIterator.next();
-            /* Keep all non-system buttons */
-            if (window.getType() != AccessibilityWindowInfo.TYPE_SYSTEM) {
-                continue;
-            }
-
-            final Rect windowBounds = new Rect();
-            window.getBoundsInScreen(windowBounds);
-
-            /* Filter out items in the status bar */
-            if ((windowBounds.bottom <= statusBarHeight)) {
-                windowIterator.remove();
-            }
-        }
-    }
-
-
 }

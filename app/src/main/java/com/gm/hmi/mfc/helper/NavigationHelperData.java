@@ -1,5 +1,8 @@
 package com.gm.hmi.mfc.helper;
 
+/**
+ * This helps the current button to understand what its navigation directions and rotate left or right.
+ */
 public class NavigationHelperData {
     private String left;
     private String right;

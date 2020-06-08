@@ -9,6 +9,7 @@ import android.view.accessibility.AccessibilityNodeInfo
 import androidx.core.view.accessibility.AccessibilityNodeInfoCompat
 import com.gm.hmi.mfc.GlobalConstants
 import com.gm.hmi.mfc.SwitchAccessWindowInfo
+import com.gm.hmi.mfc.helper.ConverterHelper
 import com.gm.hmi.mfc.helper.MockData
 import com.gm.hmi.mfc.helper.NavigationHelperData
 import com.gm.hmi.mfc.nodes.MainTreeBuilder
@@ -18,39 +19,31 @@ import com.gm.hmi.mfc.util.UiChangeDetector
 
 public class MFCService : AccessibilityService() {
 
+    private var previousViewId: String? = ""
+    private var savePreviousAppViewId: String? = ""
+    private var isFocusOnAppTray: Boolean = false
     private lateinit var data_mock: MutableMap<String, NavigationHelperData>
     private lateinit var eventProcessor: UiChangeDetector
+    private var localIndexAppTray = 0;
+
+    companion object {
+        lateinit var instance: MFCService
+    }
 
     override fun onServiceConnected() {
         super.onServiceConnected()
 
+        instance = this
+
         // test mock data initiate
         MockData()
         data_mock = MockData.getNavigationMap()
-
-        // get the active window information
-        Log.i(GlobalConstants.LOGTAG, "onServiceConnected.... ")
         eventProcessor = UiChangeDetector()
 
         Handler().postDelayed({
             buildTree()
         }, 1000)
 
-        // setFocus to First node of the a
-        Handler().postDelayed({ //                Log.i(GlobalConstants.LOGTAG, "currentNodeCompat_HMI_THREE Focused...");
-            TreeBuilder.currentScreenNodes.get("btn_home")
-                ?.performAction(AccessibilityNodeInfoCompat.ACTION_FOCUS)
-        }, 2000)
-
-        Handler().postDelayed({
-            val currentFocusedNode =
-                AccessibilityServiceCompatUtils.getInputFocusedNode(this)
-            Log.i(
-                GlobalConstants.LOGTAG,
-                "Service currentFocusedNode text " + currentFocusedNode.viewIdResourceName
-            )
-
-        }, 3000)
     }
 
     override fun onAccessibilityEvent(event: AccessibilityEvent?) {
@@ -63,10 +56,6 @@ public class MFCService : AccessibilityService() {
         ) {
             GlobalConstants.CurrentItemIndex = event.getCurrentItemIndex()
             GlobalConstants.isFocusOnSystemAppTray = true
-            Log.i(
-                "Venk",
-                "GlobalConstants.CurrentItemIndex : " + GlobalConstants.CurrentItemIndex
-            )
         }
 
         if (eventProcessor != null) {
@@ -74,12 +63,14 @@ public class MFCService : AccessibilityService() {
         }
     }
 
-    private fun buildTree() {
+    fun buildTree() {
         MainTreeBuilder(this).addWindowListToTree(
             SwitchAccessWindowInfo.convertZOrderWindowList(
                 AccessibilityServiceCompatUtils.getWindows(this)
             )
         )
+
+        TreeBuilder.setFocusToFirstnode();
     }
 
     override fun onKeyEvent(event: KeyEvent?): Boolean {
@@ -87,43 +78,57 @@ public class MFCService : AccessibilityService() {
         if (event!!.action == KeyEvent.ACTION_UP) {
             return false
         }
-
-        Log.i(GlobalConstants.LOGTAG, "Switch access service: " + event.keyCode)
         val currentFocusedNode =
             AccessibilityServiceCompatUtils.getInputFocusedNode(this)
+
         if (currentFocusedNode == null) {
             return false
         }
 
         when (event.getKeyCode()) {
-            KeyEvent.KEYCODE_BUTTON_L1 -> {
+            KeyEvent.KEYCODE_BUTTON_L1, KeyEvent.KEYCODE_COMMA -> {
                 setNextRotate(data_mock, currentFocusedNode.viewIdResourceName, false);
             }
-            KeyEvent.KEYCODE_BUTTON_R1 -> {
+            KeyEvent.KEYCODE_BUTTON_R1, KeyEvent.KEYCODE_PERIOD -> {
                 setNextRotate(data_mock, currentFocusedNode.viewIdResourceName, true);
             }
-            KeyEvent.KEYCODE_DPAD_LEFT, 2602 -> {
+            KeyEvent.KEYCODE_DPAD_LEFT, KeyEvent.KEYCODE_A, 2602 -> {
                 setNext(data_mock, currentFocusedNode.viewIdResourceName, 0)
             }
-            KeyEvent.KEYCODE_DPAD_RIGHT, 2603 -> {
+            KeyEvent.KEYCODE_DPAD_RIGHT, KeyEvent.KEYCODE_S, 2603 -> {
                 setNext(data_mock, currentFocusedNode.viewIdResourceName, 1)
             }
-            KeyEvent.KEYCODE_DPAD_UP, 2604 -> {
+            KeyEvent.KEYCODE_DPAD_UP, KeyEvent.KEYCODE_W, 2604 -> {
+                if (GlobalConstants.isFocusOnSystemAppTray) {
+                    GlobalConstants.isFocusOnSystemAppTray = false
+
+                    TreeBuilder.appTrayNavNodes[(savePreviousAppViewId)]
+                        ?.performAction(AccessibilityNodeInfoCompat.ACTION_CLEAR_FOCUS)
+
+                    TreeBuilder.appTrayNavNodes[(savePreviousAppViewId)]
+                        ?.performAction(AccessibilityNodeInfoCompat.ACTION_FOCUS)
+                    return super.onKeyEvent(event)
+                }
                 setNext(data_mock, currentFocusedNode.viewIdResourceName, 2)
             }
-            KeyEvent.KEYCODE_DPAD_DOWN, 2605 -> {
+            KeyEvent.KEYCODE_DPAD_DOWN, KeyEvent.KEYCODE_Z, 2605 -> {
                 setNext(data_mock, currentFocusedNode.viewIdResourceName, 3)
             }
         }
         return super.onKeyEvent(event)
     }
 
+    /**
+     * This method sets the navigation directions dynamically
+     */
     private fun setNext(
-        data: MutableMap<String, NavigationHelperData>,
+        data: Map<String, NavigationHelperData>,
         viewIdResourceName: String?,
         directionIndex: Int
     ) {
-        val navigationHelperData = data.get(viewIdResourceName)
+
+        val navigationHelperData =
+            data.get(ConverterHelper.getViewIdFromResourceViewId(viewIdResourceName))
         var currentViewId = navigationHelperData?.left
         when (directionIndex) {
             1 -> {
@@ -136,24 +141,76 @@ public class MFCService : AccessibilityService() {
                 currentViewId = navigationHelperData?.down.toString()
             }
         }
+        if (!GlobalConstants.isFocusOnSystemAppTray
+            && TreeBuilder.appTrayIdList.contains(
+                ConverterHelper.getViewIdFromResourceViewId(currentViewId)
+            )
+            && directionIndex == 3
+        ) {
+            GlobalConstants.isFocusOnSystemAppTray = true
+        }
 
-        TreeBuilder.currentScreenNodes.get((currentViewId))
-            ?.performAction(AccessibilityNodeInfoCompat.ACTION_FOCUS)
+        if (!GlobalConstants.isFocusOnSystemAppTray
+            && !TreeBuilder.appTrayNavNodes.containsKey(currentViewId)
+        ) {
+            TreeBuilder.currentScreenNodes[(currentViewId)]
+                ?.performAction(AccessibilityNodeInfoCompat.ACTION_FOCUS)
+            savePreviousAppViewId = currentViewId
+
+        } else {
+            if (!savePreviousAppViewId.isNullOrEmpty()) {
+                val id = TreeBuilder.appTrayIdList.get(localIndexAppTray)
+                TreeBuilder.appTrayNavNodes[(id)]
+                    ?.performAction(AccessibilityNodeInfoCompat.ACTION_FOCUS)
+            } else {
+                TreeBuilder.appTrayNavNodes[(currentViewId)]
+                    ?.performAction(AccessibilityNodeInfoCompat.ACTION_FOCUS)
+            }
+        }
+
+        previousViewId = currentViewId
     }
 
+    /**
+     * This method sets the next rotate left and right dynamically
+     */
     private fun setNextRotate(
-        data: MutableMap<String, NavigationHelperData>,
+        data: Map<String, NavigationHelperData>,
         viewIdResourceName: String?,
         value: Boolean
     ) {
-        val navigationHelperData = data.get(viewIdResourceName)
+        val navigationHelperData =
+            data[ConverterHelper.getViewIdFromResourceViewId(viewIdResourceName)]
         var currentViewId = navigationHelperData?.rotateLeft
         if (value) {
             currentViewId = navigationHelperData?.rotateRight
         }
 
-        TreeBuilder.currentScreenNodes.get((currentViewId))
-            ?.performAction(AccessibilityNodeInfoCompat.ACTION_FOCUS)
+        if (GlobalConstants.isFocusOnSystemAppTray) {
+            if (value) {
+                localIndexAppTray++
+                if (localIndexAppTray >= TreeBuilder.appTrayIdList.size) {
+                    localIndexAppTray = TreeBuilder.appTrayIdList.size - 1
+                }
+            } else {
+                localIndexAppTray--
+                if (localIndexAppTray <= 0) {
+                    localIndexAppTray = 0
+                }
+            }
+        }
+
+        if (!GlobalConstants.isFocusOnSystemAppTray) {
+            TreeBuilder.currentScreenNodes[(currentViewId)]
+                ?.performAction(AccessibilityNodeInfoCompat.ACTION_FOCUS)
+
+        } else {
+            TreeBuilder.appTrayNavNodes[(TreeBuilder.appTrayIdList[localIndexAppTray])]
+                ?.performAction(AccessibilityNodeInfoCompat.ACTION_FOCUS)
+        }
+
+        previousViewId = currentViewId
+
     }
 
     override fun onCreate() {
