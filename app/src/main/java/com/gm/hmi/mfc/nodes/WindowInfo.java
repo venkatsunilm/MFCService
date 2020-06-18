@@ -8,7 +8,7 @@ import java.util.ArrayList;
 import java.util.List;
 
 /**
- * Extension of AccessibilityWindowInfo that returns {@code ExtendedNodeCompat} for its root
+ * Extension of AccessibilityWindowInfo that returns ExtendedNodeCompat for its root
  */
 public class WindowInfo {
     private final AccessibilityWindowInfo accessibilityWindowInfo;

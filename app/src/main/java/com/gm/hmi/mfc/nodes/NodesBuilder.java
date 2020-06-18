@@ -11,7 +11,8 @@ import java.util.HashMap;
 import java.util.Map;
 
 /**
- * Builds the nodes of system and application in seperate map list.
+ * Builds the nodes of app tray and application package in map list.
+ *  *
  */
 public abstract class NodesBuilder {
 
@@ -30,7 +31,9 @@ public abstract class NodesBuilder {
     }
 
     /**
-     * Obtains a list of nodes
+     * Obtains a list of nodes from the screen
+     * There will be three windows in each screen and we will ready app tray and
+     * application nodes and ignore the System status bar layout window
      */
     public static void getNodes(NodeInfo root) {
         windowsIndex++;

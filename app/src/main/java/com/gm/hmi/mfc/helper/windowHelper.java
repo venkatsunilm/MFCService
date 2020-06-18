@@ -10,7 +10,7 @@ import android.view.accessibility.AccessibilityWindowInfo;
 import androidx.annotation.Nullable;
 import androidx.core.view.accessibility.AccessibilityNodeInfoCompat;
 
-import com.gm.hmi.mfc.util.ServiceUtils;
+import com.gm.hmi.mfc.util.ServiceCompatUtils;
 
 import java.util.ArrayList;
 import java.util.Collections;
@@ -57,7 +57,7 @@ public class windowHelper {
 
     public windowHelper(AccessibilityService service) {
         mIsInRTL = isScreenLayoutRTL(service);
-        setWindows(ServiceUtils.getWindows(service));
+        setWindows(ServiceCompatUtils.getWindows(service));
     }
 
     public static boolean isScreenLayoutRTL(Context context) {

@@ -8,20 +8,22 @@ import android.view.accessibility.AccessibilityEvent
 import android.view.accessibility.AccessibilityNodeInfo
 import androidx.core.view.accessibility.AccessibilityNodeInfoCompat
 import com.gm.hmi.mfc.constants.GlobalConstants
-import com.gm.hmi.mfc.nodes.WindowInfo
+import com.gm.hmi.mfc.events.EventUpdator
 import com.gm.hmi.mfc.helper.ConverterHelper
 import com.gm.hmi.mfc.helper.MockData
+import com.gm.hmi.mfc.helper.MockData_New
 import com.gm.hmi.mfc.helper.NavigationHelperData
 import com.gm.hmi.mfc.nodes.MainNodesBuilder
 import com.gm.hmi.mfc.nodes.NodesBuilder
-import com.gm.hmi.mfc.util.ServiceUtils
-import com.gm.hmi.mfc.events.EventUpdator
+import com.gm.hmi.mfc.nodes.WindowInfo
+import com.gm.hmi.mfc.util.ServiceCompatUtils
 
 /**
  * Main service class to use Accessibility feature
  */
 public class MFCService : AccessibilityService() {
 
+    private lateinit var currentFocusedNode: AccessibilityNodeInfoCompat
     private var previousViewId: String? = ""
     private var savePreviousAppViewId: String? = ""
     private var isFocusOnAppTray: Boolean = false
@@ -33,6 +35,11 @@ public class MFCService : AccessibilityService() {
         lateinit var instance: MFCService
     }
 
+    override fun onDestroy() {
+        super.onDestroy()
+        Log.i(GlobalConstants.LOGTAG, "onDestroy onDestroy")
+    }
+
     override fun onServiceConnected() {
         super.onServiceConnected()
 
@@ -40,13 +47,53 @@ public class MFCService : AccessibilityService() {
 
         // test mock data initiate
         MockData()
-        data_mock = MockData.getNavigationMap()
+        if (!GlobalConstants.IS_HARDWARE) {
+            data_mock = MockData.getNavigationMap()
+        } else {
+            data_mock = MockData_New.getNavigationMap()
+        }
         eventProcessor = EventUpdator()
 
         Handler().postDelayed({
             buildTree()
         }, 1000)
 
+
+        if (GlobalConstants.IS_HARDWARE) {
+            Handler().postDelayed({
+                NodesBuilder.currentScreenNodes["btn_TED"]
+                    ?.performAction(AccessibilityNodeInfoCompat.ACTION_FOCUS)
+            }, 3000)
+
+            Handler().postDelayed({
+                NodesBuilder.appTrayNavNodes["app_two"]
+                    ?.performAction(AccessibilityNodeInfoCompat.ACTION_FOCUS)
+            }, 5000)
+
+            Handler().postDelayed({
+                NodesBuilder.appTrayNavNodes["app_four"]
+                    ?.performAction(AccessibilityNodeInfoCompat.ACTION_FOCUS)
+            }, 7000)
+
+            Handler().postDelayed({
+                NodesBuilder.appTrayNavNodes["btn_TED"]
+                    ?.performAction(AccessibilityNodeInfoCompat.ACTION_FOCUS)
+            }, 10000)
+
+            Log.i(GlobalConstants.LOGTAG, "IS_HARDWARE True")
+        } else {
+
+            Handler().postDelayed({
+                NodesBuilder.currentScreenNodes["btn_phone"]
+                    ?.performAction(AccessibilityNodeInfoCompat.ACTION_FOCUS)
+                Log.d(GlobalConstants.LOGTAG, "invisibleButton Focused ........ ")
+            }, 5000)
+        }
+
+//        Handler().postDelayed({
+//            Log.i(GlobalConstants.LOGTAG, "disableSelf disableSelf")
+////            disableSelf()
+//        }, 20000)
     }
 
     override fun onAccessibilityEvent(event: AccessibilityEvent?) {
@@ -69,7 +116,7 @@ public class MFCService : AccessibilityService() {
     fun buildTree() {
         MainNodesBuilder(this).addWindowList(
             WindowInfo.convertWindowArrayOrder(
-                ServiceUtils.getWindows(this)
+                ServiceCompatUtils.getWindows(this)
             )
         )
 
@@ -78,11 +125,12 @@ public class MFCService : AccessibilityService() {
 
     override fun onKeyEvent(event: KeyEvent?): Boolean {
 
+        Log.i(GlobalConstants.LOGTAG, "key code value: " + event?.keyCode.toString())
         if (event!!.action == KeyEvent.ACTION_UP) {
             return false
         }
-        val currentFocusedNode =
-            ServiceUtils.getInputFocusedNode(this)
+        currentFocusedNode =
+            ServiceCompatUtils.getInputFocusedNode(this)
 
         if (currentFocusedNode == null) {
             return false
@@ -115,6 +163,8 @@ public class MFCService : AccessibilityService() {
                 setNext(data_mock, currentFocusedNode.viewIdResourceName, 2)
             }
             KeyEvent.KEYCODE_DPAD_DOWN, KeyEvent.KEYCODE_Z, 2605 -> {
+//                currentFocusedNode.refresh()
+//                currentFocusedNode.recycle()
                 setNext(data_mock, currentFocusedNode.viewIdResourceName, 3)
             }
         }
@@ -151,6 +201,31 @@ public class MFCService : AccessibilityService() {
             && directionIndex == 3
         ) {
             GlobalConstants.isFocusOnSystemAppTray = true
+
+            val activeRoot =
+                ServiceCompatUtils.getRootInActiveWindow(this)
+            if (activeRoot != null) {
+                try {
+                    var currNode = activeRoot.findFocus(AccessibilityNodeInfoCompat.ACTION_FOCUS)
+                    Log.i(
+                        GlobalConstants.LOGTAG,
+                        "currentFocusedNode: " + currNode.viewIdResourceName
+                    )
+//                    currNode.addAction(AccessibilityNodeInfoCompat.AccessibilityActionCompat.ACTION_CLEAR_FOCUS)
+//                    currNode.isFocused = false
+//                    NodesBuilder.currentScreenNodes["dummyView"]
+//                        ?.performAction(AccessibilityNodeInfoCompat.ACTION_FOCUS)
+                } finally {
+                    activeRoot.recycle()
+                }
+            }
+//            currentFocusedNode.isEnabled = false
+//            currentFocusedNode.isFocused = false
+//            AccessibilityNodeInfo.ACTION_CLEAR_SELECTION
+//            currentFocusedNode.addAction(AccessibilityNodeInfoCompat.AccessibilityActionCompat.ACTION_CLEAR_FOCUS)
+//            currentFocusedNode.isSelected = false
+//            currentFocusedNode.isDismissable = true
+
         }
 
         if (!GlobalConstants.isFocusOnSystemAppTray
@@ -223,4 +298,6 @@ public class MFCService : AccessibilityService() {
 
     override fun onInterrupt() {
     }
+
+
 }

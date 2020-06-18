@@ -9,6 +9,9 @@ import java.util.Collections;
 import java.util.Comparator;
 import java.util.List;
 
+/**
+ * Main class to suppor Node builder to do its operations
+ */
 public class MainNodesBuilder {
 
     private AccessibilityService service;
@@ -17,6 +20,10 @@ public class MainNodesBuilder {
         this.service = service;
     }
 
+    /**
+     * add window list to the array list and iterate to add child nodes to a map
+     * @param windowList
+     */
     public void addWindowList(List<WindowInfo> windowList) {
         if (windowList != null) {
             NodesBuilder.resetAll();
@@ -31,11 +38,14 @@ public class MainNodesBuilder {
         }
     }
 
+    /**
+     * add node information to the map for future use
+     * @param root
+     */
     public void addViews(
             NodeInfo root) {
         NodesBuilder.getNodes(root);
     }
-
 
     private static void sortWindowList(List<WindowInfo> windowList) {
         Collections.sort(

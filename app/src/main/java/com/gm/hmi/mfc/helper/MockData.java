@@ -17,7 +17,7 @@ public class MockData {
 
     public MockData() {
 
-        // For settings Activity
+        // Instead of app tray system icons we created few
         navigationMap.put("btn_home",
                 new NavigationHelperData(
                         "btn_home", "btn_previous",
@@ -46,6 +46,7 @@ public class MockData {
 
 
 
+        // middle buttons application
         navigationMap.put("btn_now_playing",
                 new NavigationHelperData(
                         "btn_home", "button_next_screen",
@@ -93,6 +94,7 @@ public class MockData {
 
 
 
+        // bottom buttons
         navigationMap.put("btn_TED",
                 new NavigationHelperData(
                         "btn_phone", "btn_TED",
@@ -105,6 +107,7 @@ public class MockData {
                         "btn_previous", "home",
                         "btn_TED", "btn_NAV"));
 
+        // next screen element
         navigationMap.put("button_next_screen",
                 new NavigationHelperData(
                         "btn_music_menu", "btn_Settings",
@@ -112,6 +115,8 @@ public class MockData {
                         "button_next_screen", "button_next_screen"));
 
 
+
+        // For AOSP pixel app tray
         navigationMap.put("home",
                 new NavigationHelperData(
                         "home", "home",

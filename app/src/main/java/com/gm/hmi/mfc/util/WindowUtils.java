@@ -6,6 +6,11 @@ import android.view.accessibility.AccessibilityWindowInfo;
 
 import androidx.annotation.Nullable;
 
+/**
+ * This is a util class to get information from AccessibilityWindowInfo
+ *
+ * TODO: Add or remove few util methods as per the requirement
+ */
 public class WindowUtils {
 
     private static final String TAG = "Venk";

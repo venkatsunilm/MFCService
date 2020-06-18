@@ -13,7 +13,13 @@ import com.gm.hmi.mfc.helper.windowHelper;
 import java.util.Collections;
 import java.util.List;
 
-public class ServiceUtils {
+/**
+ * This is a util class to get objects like
+ * AccessibilityNodeInfoCompat, AccessibilityWindowInfo from Accessibility service in different cases
+ *  TODO: Add or remove few util methods as per the requirement
+ *
+ */
+public class ServiceCompatUtils {
 
     private static final String TAG = "Venk";
 
