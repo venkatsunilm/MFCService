@@ -61,7 +61,7 @@ public abstract class NodesBuilder {
                 Log.i(GlobalConstants.LOGTAG, "root.getViewIdResourceName():  " + root.getViewIdResourceName());
 
                 boolean isWindowsID = true;
-                if (GlobalConstants.IS_HARDWARE) {
+                if (!GlobalConstants.IS_HARDWARE) {
                     isWindowsID = root.getViewIdResourceName().endsWith(APPTRAYNAVWINDOWFRAMEVIEWIENDTEXT);
                 }
 
