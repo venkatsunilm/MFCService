@@ -4,6 +4,7 @@ import android.accessibilityservice.AccessibilityService;
 import android.util.Log;
 
 import androidx.core.view.accessibility.AccessibilityNodeInfoCompat;
+
 import com.gm.hmi.mfc.constants.GlobalConstants;
 import com.gm.hmi.mfc.helper.ConverterHelper;
 
@@ -12,7 +13,7 @@ import java.util.Map;
 
 /**
  * Builds the nodes of app tray and application package in map list.
- *  *
+ * *
  */
 public abstract class NodesBuilder {
 
@@ -44,6 +45,7 @@ public abstract class NodesBuilder {
             try {
                 firstChild = root.getChild(i);
                 if (firstChild.getViewIdResourceName() != null && windowsIndex == 1) {
+                    Log.i(GlobalConstants.LOGTAG, "first child: " + firstChild.getViewIdResourceName());
                     currentScreenNodes.put(
                             ConverterHelper.getViewIdFromResourceViewId(
                                     firstChild.getViewIdResourceName()),
@@ -56,9 +58,16 @@ public abstract class NodesBuilder {
                 }
                 int subChildCount = firstChild.getChildCount();
 
+                Log.i(GlobalConstants.LOGTAG, "root.getViewIdResourceName():  " + root.getViewIdResourceName());
+
+                boolean isWindowsID = true;
+                if (GlobalConstants.IS_HARDWARE) {
+                    isWindowsID = root.getViewIdResourceName().endsWith(APPTRAYNAVWINDOWFRAMEVIEWIENDTEXT);
+                }
+
                 for (int j = 0; j < subChildCount; j++) {
-                    if (root.getViewIdResourceName() != null
-                            && root.getViewIdResourceName().endsWith(APPTRAYNAVWINDOWFRAMEVIEWIENDTEXT)) {
+                    if (root.getViewIdResourceName() != null && isWindowsID) {
+
                         secondchild = firstChild.getChild(j);
                         appTrayIdList[j] = ConverterHelper.getViewIdFromResourceViewId(
                                 secondchild.getViewIdResourceName());
@@ -67,6 +76,9 @@ public abstract class NodesBuilder {
                                 ConverterHelper.getViewIdFromResourceViewId(
                                         secondchild.getViewIdResourceName()),
                                 secondchild);
+
+                        Log.i(GlobalConstants.LOGTAG, "second child or app tray: " + secondchild.getViewIdResourceName());
+
                     }
                 }
 //                Rect bounds = getBoundsInternal(child);

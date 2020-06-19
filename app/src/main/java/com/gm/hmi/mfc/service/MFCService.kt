@@ -49,6 +49,22 @@ public class MFCService : AccessibilityService() {
         MockData()
         if (!GlobalConstants.IS_HARDWARE) {
             data_mock = MockData.getNavigationMap()
+
+//            data_mock.clear()
+//
+//            // start the for loop here and read data one by one
+//            for (i in 0..10){
+//
+//                val value = NavigationHelperData(
+//                    "app_two", "btn_previous",
+//                    "btn_now_playing", "btn_TED",
+//                    "btn_home", "btn_music"
+//                )
+//
+//                data_mock.put("btn_home_sample", value)
+//            }
+
+
         } else {
             data_mock = MockData_New.getNavigationMap()
         }
@@ -61,33 +77,34 @@ public class MFCService : AccessibilityService() {
 
         if (GlobalConstants.IS_HARDWARE) {
             Handler().postDelayed({
+                Log.i(GlobalConstants.LOGTAG, "btn_TED focused.................................." )
                 NodesBuilder.currentScreenNodes["btn_TED"]
                     ?.performAction(AccessibilityNodeInfoCompat.ACTION_FOCUS)
-            }, 3000)
+            }, 10000)
 
             Handler().postDelayed({
                 NodesBuilder.appTrayNavNodes["app_two"]
                     ?.performAction(AccessibilityNodeInfoCompat.ACTION_FOCUS)
-            }, 5000)
+            }, 15000)
 
             Handler().postDelayed({
                 NodesBuilder.appTrayNavNodes["app_four"]
                     ?.performAction(AccessibilityNodeInfoCompat.ACTION_FOCUS)
-            }, 7000)
+            }, 20000)
 
             Handler().postDelayed({
-                NodesBuilder.appTrayNavNodes["btn_TED"]
+                NodesBuilder.currentScreenNodes["btn_music"]
                     ?.performAction(AccessibilityNodeInfoCompat.ACTION_FOCUS)
-            }, 10000)
+            }, 25000)
 
             Log.i(GlobalConstants.LOGTAG, "IS_HARDWARE True")
         } else {
-
-            Handler().postDelayed({
-                NodesBuilder.currentScreenNodes["btn_phone"]
-                    ?.performAction(AccessibilityNodeInfoCompat.ACTION_FOCUS)
-                Log.d(GlobalConstants.LOGTAG, "invisibleButton Focused ........ ")
-            }, 5000)
+//
+//            Handler().postDelayed({
+//                NodesBuilder.currentScreenNodes["btn_phone"]
+//                    ?.performAction(AccessibilityNodeInfoCompat.ACTION_FOCUS)
+//                Log.d(GlobalConstants.LOGTAG, "invisibleButton Focused ........ ")
+//            }, 5000)
         }
 
 //        Handler().postDelayed({

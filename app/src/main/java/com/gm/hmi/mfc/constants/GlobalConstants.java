@@ -4,12 +4,10 @@ import androidx.core.view.accessibility.AccessibilityNodeInfoCompat;
 
 public class GlobalConstants {
 
-    public static final boolean IS_HARDWARE = true;
+    public static final boolean IS_HARDWARE = false;
 
     public static final String LOGTAG = "Venk";
     public static int CurrentItemIndex = -1;
     public static boolean isFocusOnSystemAppTray = false;
     public static final String SYSTEM_PACKAGE_NAME = "com.android.systemui";
-
-
 }
