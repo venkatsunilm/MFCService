@@ -58,16 +58,17 @@ public abstract class NodesBuilder {
                 }
                 int subChildCount = firstChild.getChildCount();
 
-                Log.i(GlobalConstants.LOGTAG, "root.getViewIdResourceName():  " + root.getViewIdResourceName());
-
-                boolean isWindowsID = true;
-                if (!GlobalConstants.IS_HARDWARE) {
-                    isWindowsID = root.getViewIdResourceName().endsWith(APPTRAYNAVWINDOWFRAMEVIEWIENDTEXT);
-                }
-
+//                Log.i(GlobalConstants.LOGTAG, "root.getViewIdResourceName():  " + root.getViewIdResourceName());
                 for (int j = 0; j < subChildCount; j++) {
-                    if (root.getViewIdResourceName() != null && isWindowsID) {
 
+                    boolean isWindowsID = false;
+                    if (!GlobalConstants.IS_HARDWARE && root.getViewIdResourceName() != null) {
+                        isWindowsID = root.getViewIdResourceName().endsWith(APPTRAYNAVWINDOWFRAMEVIEWIENDTEXT);
+                    } else if (GlobalConstants.IS_HARDWARE){
+                        isWindowsID = true;
+                    }
+
+                    if (isWindowsID) {
                         secondchild = firstChild.getChild(j);
                         appTrayIdList[j] = ConverterHelper.getViewIdFromResourceViewId(
                                 secondchild.getViewIdResourceName());
@@ -108,7 +109,7 @@ public abstract class NodesBuilder {
     public static void resetAll() {
         currentScreenNodes = new HashMap();
         appTrayNavNodes = new HashMap();
-        appTrayIdList = new String[7];
+        appTrayIdList = new String[20];
         windowsIndex = -1;
     }
 }

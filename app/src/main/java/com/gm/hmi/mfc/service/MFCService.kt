@@ -77,7 +77,7 @@ public class MFCService : AccessibilityService() {
 
         if (GlobalConstants.IS_HARDWARE) {
             Handler().postDelayed({
-                Log.i(GlobalConstants.LOGTAG, "btn_TED focused.................................." )
+                Log.i(GlobalConstants.LOGTAG, "btn_TED focused..................................")
                 NodesBuilder.currentScreenNodes["btn_TED"]
                     ?.performAction(AccessibilityNodeInfoCompat.ACTION_FOCUS)
             }, 10000)
@@ -114,7 +114,7 @@ public class MFCService : AccessibilityService() {
     }
 
     override fun onAccessibilityEvent(event: AccessibilityEvent?) {
-        Log.i(GlobalConstants.LOGTAG, "onAccessibilityEvent: $event")
+//        Log.i(GlobalConstants.LOGTAG, "onAccessibilityEvent: $event")
         val source: AccessibilityNodeInfo = event?.source ?: return
 
         if (event.getEventType() == AccessibilityEvent.TYPE_VIEW_FOCUSED
@@ -211,31 +211,49 @@ public class MFCService : AccessibilityService() {
                 currentViewId = navigationHelperData?.down.toString()
             }
         }
-        if (!GlobalConstants.isFocusOnSystemAppTray
-            && NodesBuilder.appTrayIdList.contains(
-                ConverterHelper.getViewIdFromResourceViewId(currentViewId)
+
+        // This logic works only for the navigation down button for CSM it will be on LEFT
+        Log.i(
+            GlobalConstants.LOGTAG,
+            "Current View ID: " + currentViewId + " directionIndex: " + directionIndex +
+                    "GlobalConstants.isFocusOnSystemAppTray: " + GlobalConstants.isFocusOnSystemAppTray +
+                    "NodesBuilder.appTrayIdList.contains(currentViewId): " + NodesBuilder.appTrayIdList.contains(
+                currentViewId
             )
+        )
+
+//        for(x in NodesBuilder.appTrayIdList){
+//            Log.i(GlobalConstants.LOGTAG, "NodesBuilder.appTrayIdList : " + x)
+//        }
+
+        if (!GlobalConstants.isFocusOnSystemAppTray
+            && NodesBuilder.appTrayIdList.contains(currentViewId)
             && directionIndex == 3
         ) {
             GlobalConstants.isFocusOnSystemAppTray = true
 
-            val activeRoot =
-                ServiceCompatUtils.getRootInActiveWindow(this)
-            if (activeRoot != null) {
-                try {
-                    var currNode = activeRoot.findFocus(AccessibilityNodeInfoCompat.ACTION_FOCUS)
-                    Log.i(
-                        GlobalConstants.LOGTAG,
-                        "currentFocusedNode: " + currNode.viewIdResourceName
-                    )
+            Log.i(GlobalConstants.LOGTAG, "isFocused on app tray Current View ID: " + currentViewId)
+
+            NodesBuilder.currentScreenNodes["dummyView"]
+                ?.performAction(AccessibilityNodeInfoCompat.ACTION_FOCUS)
+
+//            val activeRoot =
+//                ServiceCompatUtils.getRootInActiveWindow(this)
+//            if (activeRoot != null) {
+//                try {
+//                    var currNode = activeRoot.findFocus(AccessibilityNodeInfoCompat.ACTION_FOCUS)
+//                    Log.i(
+//                        GlobalConstants.LOGTAG,
+//                        "currentFocusedNode: " + currNode.viewIdResourceName
+//                    )
 //                    currNode.addAction(AccessibilityNodeInfoCompat.AccessibilityActionCompat.ACTION_CLEAR_FOCUS)
 //                    currNode.isFocused = false
 //                    NodesBuilder.currentScreenNodes["dummyView"]
 //                        ?.performAction(AccessibilityNodeInfoCompat.ACTION_FOCUS)
-                } finally {
-                    activeRoot.recycle()
-                }
-            }
+//                } finally {
+//                    activeRoot.recycle()
+//                }
+//            }
 //            currentFocusedNode.isEnabled = false
 //            currentFocusedNode.isFocused = false
 //            AccessibilityNodeInfo.ACTION_CLEAR_SELECTION
