@@ -10,4 +10,5 @@ public class GlobalConstants {
     public static int CurrentItemIndex = -1;
     public static boolean isFocusOnSystemAppTray = false;
     public static final String SYSTEM_PACKAGE_NAME = "com.android.systemui";
+    public static boolean isFocusOnDummyView;
 }

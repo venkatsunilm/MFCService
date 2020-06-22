@@ -169,11 +169,18 @@ public class MFCService : AccessibilityService() {
             KeyEvent.KEYCODE_DPAD_UP, KeyEvent.KEYCODE_W, 2604 -> {
                 if (GlobalConstants.isFocusOnSystemAppTray) {
                     GlobalConstants.isFocusOnSystemAppTray = false
+                    GlobalConstants.isFocusOnDummyView = false
 
-                    NodesBuilder.appTrayNavNodes[(savePreviousAppViewId)]
-                        ?.performAction(AccessibilityNodeInfoCompat.ACTION_CLEAR_FOCUS)
+//                    NodesBuilder.appTrayNavNodes[(savePreviousAppViewId)]
+//                        ?.performAction(AccessibilityNodeInfoCompat.ACTION_CLEAR_FOCUS)
 
-                    NodesBuilder.appTrayNavNodes[(savePreviousAppViewId)]
+                    Log.i(
+                        GlobalConstants.LOGTAG,
+                        "NodesBuilder.currentScreenNodes[(savePreviousAppViewId)]: "
+                                + NodesBuilder.currentScreenNodes[(savePreviousAppViewId)]
+                    )
+
+                    NodesBuilder.currentScreenNodes[(savePreviousAppViewId)]
                         ?.performAction(AccessibilityNodeInfoCompat.ACTION_FOCUS)
                     return super.onKeyEvent(event)
                 }
@@ -226,17 +233,26 @@ public class MFCService : AccessibilityService() {
 //            Log.i(GlobalConstants.LOGTAG, "NodesBuilder.appTrayIdList : " + x)
 //        }
 
+//        if focus is on not on app tray and if next focus is about to point to the app tray
+//        also if the direction is down the set focus to the dummy button
         if (!GlobalConstants.isFocusOnSystemAppTray
             && NodesBuilder.appTrayIdList.contains(currentViewId)
             && directionIndex == 3
         ) {
             GlobalConstants.isFocusOnSystemAppTray = true
+            GlobalConstants.isFocusOnDummyView = true
 
-            Log.i(GlobalConstants.LOGTAG, "isFocused on app tray Current View ID: " + currentViewId)
+            // force save the current id so we can focus when we come back from app tray
+            savePreviousAppViewId = ConverterHelper.getViewIdFromResourceViewId(viewIdResourceName)
 
+            Log.i(
+                GlobalConstants.LOGTAG,
+                "isFocused on app tray savePreviousAppViewId: " + savePreviousAppViewId
+            )
             NodesBuilder.currentScreenNodes["dummyView"]
                 ?.performAction(AccessibilityNodeInfoCompat.ACTION_FOCUS)
 
+            // region action clear focus code research, not in use as of now
 //            val activeRoot =
 //                ServiceCompatUtils.getRootInActiveWindow(this)
 //            if (activeRoot != null) {
@@ -261,17 +277,21 @@ public class MFCService : AccessibilityService() {
 //            currentFocusedNode.isSelected = false
 //            currentFocusedNode.isDismissable = true
 
+//            endregion, not in use as of now
+
         }
 
         if (!GlobalConstants.isFocusOnSystemAppTray
             && !NodesBuilder.appTrayNavNodes.containsKey(currentViewId)
+            && !GlobalConstants.isFocusOnDummyView
         ) {
             NodesBuilder.currentScreenNodes[(currentViewId)]
                 ?.performAction(AccessibilityNodeInfoCompat.ACTION_FOCUS)
             savePreviousAppViewId = currentViewId
 
-        } else {
+        } else if (GlobalConstants.isFocusOnSystemAppTray) {
             if (!savePreviousAppViewId.isNullOrEmpty()) {
+                // a localIndexAppTray index is mandatory to navigate through the app tray
                 val id = NodesBuilder.appTrayIdList.get(localIndexAppTray)
                 NodesBuilder.appTrayNavNodes[(id)]
                     ?.performAction(AccessibilityNodeInfoCompat.ACTION_FOCUS)
