@@ -2,7 +2,10 @@ package com.gm.hmi.mfc.nodes;
 
 import android.accessibilityservice.AccessibilityService;
 import android.graphics.Rect;
+import android.util.Log;
 import android.view.accessibility.AccessibilityWindowInfo;
+
+import com.gm.hmi.mfc.constants.GlobalConstants;
 
 import java.util.ArrayList;
 import java.util.Collections;
@@ -22,6 +25,7 @@ public class MainNodesBuilder {
 
     /**
      * add window list to the array list and iterate to add child nodes to a map
+     *
      * @param windowList
      */
     public void addWindowList(List<WindowInfo> windowList) {
@@ -29,22 +33,29 @@ public class MainNodesBuilder {
             NodesBuilder.resetAll();
             List<WindowInfo> wList = new ArrayList<>(windowList);
             sortWindowList(wList);
+            Log.i(GlobalConstants.LOGTAG, "Window list Size: " + wList.size());
+
             for (WindowInfo window : wList) {
                 NodeInfo windowRoot = window.getRoot();
                 if (windowRoot != null) {
-                    addViews(windowRoot);
+                    addViews(windowRoot, wList.size());
                 }
             }
+
+
+            NodesBuilder.organizeTheNodesForAutoNavigation();
+
         }
     }
 
     /**
      * add node information to the map for future use
+     *
      * @param root
      */
     public void addViews(
-            NodeInfo root) {
-        NodesBuilder.getNodes(root);
+            NodeInfo root, int windowListSize) {
+        NodesBuilder.getNodes(root, windowListSize);
     }
 
     private static void sortWindowList(List<WindowInfo> windowList) {

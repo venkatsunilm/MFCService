@@ -92,8 +92,6 @@ public class MockData {
                         "btn_more", "btn_Settings"));
 
 
-
-
         // bottom buttons
         navigationMap.put("btn_TED",
                 new NavigationHelperData(
@@ -113,7 +111,6 @@ public class MockData {
                         "btn_music_menu", "btn_Settings",
                         "button_next_screen", "btn_play_pause",
                         "button_next_screen", "button_next_screen"));
-
 
 
         // For AOSP pixel app tray
@@ -158,6 +155,67 @@ public class MockData {
                         "assist", "assist",
                         "btn_TED", "assist",
                         "notifications", "assist"));
+
+        //        region search_container_hotseat
+        navigationMap.put("search_container_workspace",
+                new NavigationHelperData(
+                        "search_container_workspace", "search_container_workspace",
+                        "search_container_workspace", "drag_indicator",
+                        "search_container_workspace", "search_container_workspace"));
+
+        navigationMap.put("workspace",
+                new NavigationHelperData(
+                        "workspace", "workspace",
+                        "workspace", "drag_indicator",
+                        "workspace", "workspace"));
+
+        navigationMap.put("drag_indicator",
+                new NavigationHelperData(
+                        "drag_indicator", "drag_indicator",
+                        "workspace", "search_container_hotseat",
+                        "drag_indicator", "drag_indicator"));
+
+        navigationMap.put("search_container_hotseat",
+                new NavigationHelperData(
+                        "search_container_hotseat", "search_container_hotseat",
+                        "drag_indicator", "home",
+                        "search_container_hotseat", "search_container_hotseat"));
+
+
+//        mock data for home launcher, Android device
+        navigationMap.put("Weather",
+                new NavigationHelperData(
+                        "Weather", "Weather",
+                        "Weather", "Search",
+                        "Weather", "Weather"));
+
+        navigationMap.put("Search",
+                new NavigationHelperData(
+                        "Search", "Search",
+                        "Weather", "Calculator",
+                        "Search", "Search"));
+
+        navigationMap.put("Calculator",
+                new NavigationHelperData(
+                        "OneDrive", "Samsung Notes",
+                        "Search", "My Files",
+                        "OneDrive", "Samsung Notes"));
+
+
+        navigationMap.put("Office",
+                new NavigationHelperData(
+                        "Google folder", "OneDrive",
+                        "Galaxy Essentials", "My Files",
+                        "Google folder", "OneDrive"));
+
+        navigationMap.put("OneDrive",
+                new NavigationHelperData(
+                        "Office", "Calculator",
+                        "Galaxy Essentials", "Gallery",
+                        "Office", "Calculator"));
+
+
+//        endregion
 
     }
 }

@@ -23,6 +23,7 @@ import com.gm.hmi.mfc.util.ServiceCompatUtils
  */
 public class MFCService : AccessibilityService() {
 
+    private var prevEventTime: Long = 0
     private lateinit var currentFocusedNode: AccessibilityNodeInfoCompat
     private var previousViewId: String? = ""
     private var savePreviousAppViewId: String? = ""
@@ -46,26 +47,11 @@ public class MFCService : AccessibilityService() {
         instance = this
 
         // test mock data initiate
-        MockData()
         if (!GlobalConstants.IS_HARDWARE) {
+            MockData()
             data_mock = MockData.getNavigationMap()
-
-//            data_mock.clear()
-//
-//            // start the for loop here and read data one by one
-//            for (i in 0..10){
-//
-//                val value = NavigationHelperData(
-//                    "app_two", "btn_previous",
-//                    "btn_now_playing", "btn_TED",
-//                    "btn_home", "btn_music"
-//                )
-//
-//                data_mock.put("btn_home_sample", value)
-//            }
-
-
         } else {
+            MockData_New()
             data_mock = MockData_New.getNavigationMap()
         }
         eventProcessor = EventUpdator()
@@ -99,11 +85,13 @@ public class MFCService : AccessibilityService() {
 
             Log.i(GlobalConstants.LOGTAG, "IS_HARDWARE True")
         } else {
-//
+
 //            Handler().postDelayed({
-//                NodesBuilder.currentScreenNodes["btn_phone"]
-//                    ?.performAction(AccessibilityNodeInfoCompat.ACTION_FOCUS)
-//                Log.d(GlobalConstants.LOGTAG, "invisibleButton Focused ........ ")
+////                NodesBuilder.appTrayNavNodes["home"]
+////                    ?.performAction(AccessibilityNodeInfoCompat.ACTION_CLICK)
+////                Log.d(GlobalConstants.LOGTAG, "invisibleButton Focused ........ ")
+//
+////                performGlobalAction(AccessibilityService.GLOBAL_ACTION_HOME)
 //            }, 5000)
         }
 
@@ -114,11 +102,18 @@ public class MFCService : AccessibilityService() {
     }
 
     override fun onAccessibilityEvent(event: AccessibilityEvent?) {
-//        Log.i(GlobalConstants.LOGTAG, "onAccessibilityEvent: $event")
         val source: AccessibilityNodeInfo = event?.source ?: return
+//        TODO: try to stop unnecessary events and reading data as the frame work calls multiple events at an instance.
+//        if (Math.abs(event.eventTime - prevEventTime) <= 50) {
+//            Log.i(GlobalConstants.LOGTAG, "Previous event time and this time is same, ignoring duplicate events ..........")
+//            return
+//        }
+
+//        Log.i(GlobalConstants.LOGTAG, "onAccessibilityEvent: " + source.viewIdResourceName);
 
         if (event.getEventType() == AccessibilityEvent.TYPE_VIEW_FOCUSED
-            && source.packageName.toString() == GlobalConstants.SYSTEM_PACKAGE_NAME
+            && (source.packageName.toString() == GlobalConstants.SYSTEM_PACKAGE_NAME /*||
+                    source.packageName.toString() == GlobalConstants.LAUNCHER_PACKAGE_NAME*/)
             && source.viewIdResourceName != null
         ) {
             GlobalConstants.CurrentItemIndex = event.getCurrentItemIndex()
@@ -128,56 +123,78 @@ public class MFCService : AccessibilityService() {
         if (eventProcessor != null) {
             eventProcessor.onAccessibilityEvent(event)
         }
+
+        prevEventTime = event.eventTime
+
     }
 
     fun buildTree() {
+
+        if (false) {
+            return;
+        }
         MainNodesBuilder(this).addWindowList(
             WindowInfo.convertWindowArrayOrder(
                 ServiceCompatUtils.getWindows(this)
             )
         )
-
         NodesBuilder.setFocusToFirstnode();
+
+        // get the keys of the setHashMap of the nodes to collect the in
     }
 
     override fun onKeyEvent(event: KeyEvent?): Boolean {
 
-        Log.i(GlobalConstants.LOGTAG, "key code value: " + event?.keyCode.toString())
         if (event!!.action == KeyEvent.ACTION_UP) {
             return false
         }
+
+        Log.i(GlobalConstants.LOGTAG, "key code value: " + event?.keyCode.toString())
+
         currentFocusedNode =
             ServiceCompatUtils.getInputFocusedNode(this)
+
+        Log.i(
+            GlobalConstants.LOGTAG,
+            "Keycode currentFocusedNode: " + currentFocusedNode?.viewIdResourceName
+        )
+
 
         if (currentFocusedNode == null) {
             return false
         }
 
         when (event.getKeyCode()) {
-            KeyEvent.KEYCODE_BUTTON_L1, KeyEvent.KEYCODE_COMMA -> {
-                setNextRotate(data_mock, currentFocusedNode.viewIdResourceName, false);
+            KeyEvent.KEYCODE_BUTTON_L1, KeyEvent.KEYCODE_COMMA,
+            KeyEvent.KEYCODE_NUMPAD_0 -> {
+//                setNextRotate(data_mock, currentFocusedNode.viewIdResourceName, false);
+                setNextRotate(currentFocusedNode.viewIdResourceName, true)
             }
-            KeyEvent.KEYCODE_BUTTON_R1, KeyEvent.KEYCODE_PERIOD -> {
+            KeyEvent.KEYCODE_BUTTON_R1, KeyEvent.KEYCODE_PERIOD,
+            KeyEvent.KEYCODE_NUMPAD_DOT -> {
                 setNextRotate(data_mock, currentFocusedNode.viewIdResourceName, true);
             }
-            KeyEvent.KEYCODE_DPAD_LEFT, KeyEvent.KEYCODE_A, 2602 -> {
+            KeyEvent.KEYCODE_DPAD_LEFT, KeyEvent.KEYCODE_A, 2602,
+            KeyEvent.KEYCODE_NUMPAD_1 -> {
                 setNext(data_mock, currentFocusedNode.viewIdResourceName, 0)
             }
-            KeyEvent.KEYCODE_DPAD_RIGHT, KeyEvent.KEYCODE_S, 2603 -> {
+            KeyEvent.KEYCODE_DPAD_RIGHT, KeyEvent.KEYCODE_S, 2603,
+            KeyEvent.KEYCODE_NUMPAD_3 -> {
                 setNext(data_mock, currentFocusedNode.viewIdResourceName, 1)
             }
-            KeyEvent.KEYCODE_DPAD_UP, KeyEvent.KEYCODE_W, 2604 -> {
+            KeyEvent.KEYCODE_DPAD_UP, KeyEvent.KEYCODE_W, 2604,
+            KeyEvent.KEYCODE_NUMPAD_9 -> {
                 if (GlobalConstants.isFocusOnSystemAppTray) {
                     GlobalConstants.isFocusOnSystemAppTray = false
                     GlobalConstants.isFocusOnDummyView = false
 
-//                    NodesBuilder.appTrayNavNodes[(savePreviousAppViewId)]
-//                        ?.performAction(AccessibilityNodeInfoCompat.ACTION_CLEAR_FOCUS)
+                    NodesBuilder.appTrayNavNodes[((NodesBuilder.appTrayIdList[localIndexAppTray]))]
+                        ?.performAction(AccessibilityNodeInfoCompat.ACTION_CLEAR_SELECTION)
 
                     Log.i(
                         GlobalConstants.LOGTAG,
-                        "NodesBuilder.currentScreenNodes[(savePreviousAppViewId)]: "
-                                + NodesBuilder.currentScreenNodes[(savePreviousAppViewId)]
+                        "(NodesBuilder.appTrayIdList[localIndexAppTray]): "
+                                + (NodesBuilder.appTrayIdList[localIndexAppTray])
                     )
 
                     NodesBuilder.currentScreenNodes[(savePreviousAppViewId)]
@@ -186,7 +203,8 @@ public class MFCService : AccessibilityService() {
                 }
                 setNext(data_mock, currentFocusedNode.viewIdResourceName, 2)
             }
-            KeyEvent.KEYCODE_DPAD_DOWN, KeyEvent.KEYCODE_Z, 2605 -> {
+            KeyEvent.KEYCODE_DPAD_DOWN, KeyEvent.KEYCODE_Z, 2605,
+            KeyEvent.KEYCODE_NUMPAD_7 -> {
 //                currentFocusedNode.refresh()
 //                currentFocusedNode.recycle()
                 setNext(data_mock, currentFocusedNode.viewIdResourceName, 3)
@@ -285,6 +303,15 @@ public class MFCService : AccessibilityService() {
             && !NodesBuilder.appTrayNavNodes.containsKey(currentViewId)
             && !GlobalConstants.isFocusOnDummyView
         ) {
+
+            for (item in NodesBuilder.currentScreenNodes) {
+                Log.i(GlobalConstants.LOGTAG, "Current node: " + item)
+            }
+
+            Log.i(
+                GlobalConstants.LOGTAG,
+                "currentScreenNodes[(currentViewId)]: " + NodesBuilder.currentScreenNodes[(currentViewId)]
+            )
             NodesBuilder.currentScreenNodes[(currentViewId)]
                 ?.performAction(AccessibilityNodeInfoCompat.ACTION_FOCUS)
             savePreviousAppViewId = currentViewId
@@ -302,6 +329,54 @@ public class MFCService : AccessibilityService() {
         }
 
         previousViewId = currentViewId
+    }
+
+    var rotateIndex = -1
+    private fun setNextRotate(
+        viewIdResourceName: String?,
+        value: Boolean
+    ) {
+        rotateIndex = GlobalConstants.applicationScreenStartingIndex
+        // get the current index and set the next index
+
+        if (value) {
+            rotateIndex++
+        } else {
+            rotateIndex--
+        }
+
+        if (rotateIndex <= GlobalConstants.applicationScreenStartingIndex) {
+            rotateIndex = GlobalConstants.applicationScreenStartingIndex
+        }
+//        if (rotateIndex ){
+//
+//        }
+
+        var keyText = ConverterHelper.getElementByIndexFromHashMap(
+            NodesBuilder.currentScrNodesHashMap,
+            rotateIndex
+        )
+
+        while (!keyText.isEnabled) {
+            Log.i(
+                GlobalConstants.LOGTAG,
+                "Key text is Disabled, so get the next element until it finds which is enabled"
+            )
+            rotateIndex++
+            keyText = ConverterHelper.getElementByIndexFromHashMap(
+                NodesBuilder.currentScrNodesHashMap,
+                rotateIndex
+            )
+        }
+
+        Log.i(
+            GlobalConstants.LOGTAG, "rotateIndex: " + rotateIndex
+                    + " keyText: " + keyText
+        )
+
+
+        keyText.performAction(AccessibilityNodeInfoCompat.ACTION_FOCUS)
+//        NodesBuilder.currentScrNodesHashMap["Window#1#1#app_item"]?.performAction(AccessibilityNodeInfoCompat.ACTION_FOCUS)
     }
 
     /**

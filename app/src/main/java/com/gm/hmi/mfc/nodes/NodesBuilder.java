@@ -1,15 +1,21 @@
 package com.gm.hmi.mfc.nodes;
 
 import android.accessibilityservice.AccessibilityService;
+import android.graphics.Rect;
 import android.util.Log;
 
 import androidx.core.view.accessibility.AccessibilityNodeInfoCompat;
 
 import com.gm.hmi.mfc.constants.GlobalConstants;
 import com.gm.hmi.mfc.helper.ConverterHelper;
+import com.gm.hmi.mfc.model.NodeInfoData;
 
 import java.util.HashMap;
+import java.util.LinkedHashMap;
 import java.util.Map;
+import java.util.Set;
+import java.util.TreeMap;
+import java.util.TreeSet;
 
 /**
  * Builds the nodes of app tray and application package in map list.
@@ -18,14 +24,24 @@ import java.util.Map;
 public abstract class NodesBuilder {
 
     final AccessibilityService service;
-    private static final String APPTRAYNAVWINDOWFRAMEVIEWIENDTEXT = "navigation_bar_frame";
+    private static final String APPTRAYNAVWINDOWFRAMEVIEWIENDTEXT = "navigation_bar_frame"; // navigation_bar_frame
 
     // TODO: getters and setters, remove static
     public static Map<String, AccessibilityNodeInfoCompat> currentScreenNodes;
     public static Map<String, AccessibilityNodeInfoCompat> appTrayNavNodes;
+
+    private static int windowListSize = -1;
+    private static int depthToReadChildrenLevel = 1;
+//    public static Map<String, AccessibilityNodeInfoCompat> currentScreenNodes_new;
+//    public static Map<String, WindowInfoData> windowInfoDataMap;
+//    public static Map<String, NodeInfoData> nodeInfoDataMap;
+
+    public static HashMap<String, String> windowChildSize ;
+    public static HashMap<String, AccessibilityNodeInfoCompat> currentScrNodesHashMap;
+
     public static String[] appTrayIdList;
-    private static String firstNodeViewId = "";
     public static int windowsIndex = -1;
+    private static String WindowIndexPrefix = "Window#1";
 
     NodesBuilder(AccessibilityService service) {
         this.service = service;
@@ -36,80 +52,297 @@ public abstract class NodesBuilder {
      * There will be three windows in each screen and we will ready app tray and
      * application nodes and ignore the System status bar layout window
      */
-    public static void getNodes(NodeInfo root) {
+    public static void getNodes(NodeInfo root, int windowsCount) {
         windowsIndex++;
+        windowListSize = windowsCount;
+
+        Log.i(GlobalConstants.LOGTAG,
+                " \n windowsIndex " + windowsIndex
+                        + " \n getViewIdResourceName : " + root.getViewIdResourceName()
+                        + " \n getContentDescription(): " + root.getContentDescription()
+                        + " \n getPackageName: " + root.getPackageName()
+                        + " \n firstChild Count : " + root.getChildCount() + "\n    ");
+
+//        updateFirstChildInfo(root);
+        updateChildsInfo(root, windowsIndex);
+//        windowChildSize.put(String.valueOf(windowsIndex), String.valueOf(indexCheck));
+        Log.i(GlobalConstants.LOGTAG, " windowChildSize: " + windowChildSize);
+
+        indexCheck = 0;
+
+
+        if (windowsIndex == windowListSize - 1) {
+            windowsIndex = -1;
+        }
+    }
+
+    //    region: Try to read all children one by one till the depth is availale
+//    TODO: This depth migt not be required as i do not see any children more than three steps in any screens.
+//    TODO: In the third child level almost the resource id are null or all are with the same resource name or it is not useful for navigation
+//    TODO: except for the app grid content, as per the observation.
+    private static AccessibilityNodeInfoCompat child;
+    private static int indexCheck = 0;
+    private static int childLevelIndex = -1;
+    private static NodeInfoData nodeInfoData;
+
+    private static void updateChildsInfo(AccessibilityNodeInfoCompat root, int windowsIndex) {
+
         int childCount = root.getChildCount();
-        AccessibilityNodeInfoCompat firstChild = null;
-        AccessibilityNodeInfoCompat secondchild = null;
+
+        if (windowsIndex >= windowListSize) {
+            Log.i(GlobalConstants.LOGTAG, "Reached end of reading all windows.........");
+            return;
+        }
+
+//        Log.i(GlobalConstants.LOGTAG, "childCount: " + childCount);
         for (int i = 0; i < childCount; i++) {
+            child = root.getChild(i);
+            if (child == null) {
+                return;
+            }
+            String resourceIdOrContentDescription = child.getViewIdResourceName();
+
+//              The resource id is null in few screens when tested in different hardwares
+            if (resourceIdOrContentDescription == null
+                    && child.getContentDescription() != null) {
+                resourceIdOrContentDescription = child.getContentDescription().toString();
+            }
+
+            if (child.getViewIdResourceName() == null && child.getContentDescription() == null) {
+                resourceIdOrContentDescription = "NOT_AVAILABLE#";
+            }
+
+//            String keyName = "Windows#" + windowsIndex + "#"
+//                    + "indexCheck#" + indexCheck + "#"
+//                    + "childLevelIndex#" + childLevelIndex + "#"
+//                    + ConverterHelper.getViewIdFromResourceViewId(resourceIdOrContentDescription)
+//                    + "#" + child.getPackageName();
+
+            String keyName = "Window#" + windowsIndex + "#"
+                    + i + "#"
+                    + ConverterHelper.getViewIdFromResourceViewId(resourceIdOrContentDescription);
+
+            windowChildSize.put(String.valueOf(windowsIndex), String.valueOf(i));
+
+//            Log.i(GlobalConstants.LOGTAG, "Key Name: " + keyName);
+
+//            nodeInfoData = new NodeInfoData(keyName, child);
+//            nodeInfoDataMap.put(keyName, nodeInfoData);
+
+//            WindowInfoData windowInfoData = new WindowInfoData();
+
+            childLevelIndex++;
+
+            if (childLevelIndex < depthToReadChildrenLevel
+                    && child.isFocusable() && child.isImportantForAccessibility()) {
+                currentScreenNodes.put(keyName, child);
+                currentScrNodesHashMap.put(keyName, child);
+                Log.i(GlobalConstants.LOGTAG, " keyName: " + keyName);
+            }
+
+            updateChildsInfo(child, windowsIndex);
+            childLevelIndex = -1;
+        }
+        indexCheck++;
+    }
+//  endregion:
+
+    private static void updateFirstChildInfo(NodeInfo root) {
+        AccessibilityNodeInfoCompat firstChild = null;
+        AccessibilityNodeInfoCompat secondChild = null;
+        AccessibilityNodeInfoCompat thirdChild = null;
+
+        int childCount = root.getChildCount();
+
+        for (int i = 0; i < childCount; i++) {
+
             try {
                 firstChild = root.getChild(i);
-                if (firstChild.getViewIdResourceName() != null && windowsIndex == 1) {
-                    Log.i(GlobalConstants.LOGTAG, "first child: " + firstChild.getViewIdResourceName());
+                String firstResourceIdOrContentDescription = firstChild.getViewIdResourceName();
+
+//              The resource id is null in few screens when tested in different hardwares
+                if (firstResourceIdOrContentDescription == null
+                        && firstChild.getContentDescription() != null) {
+                    firstResourceIdOrContentDescription = firstChild.getContentDescription().toString();
+                }
+
+                if (windowsIndex == 1) {
+                    Log.i(GlobalConstants.LOGTAG,
+                            "firstChild resourceOrDescriptionName: " +
+                                    firstResourceIdOrContentDescription);
+
                     currentScreenNodes.put(
                             ConverterHelper.getViewIdFromResourceViewId(
-                                    firstChild.getViewIdResourceName()),
+                                    firstResourceIdOrContentDescription),
                             firstChild);
-
-                    if (i == 1) {
-                        firstNodeViewId = ConverterHelper.getViewIdFromResourceViewId(
-                                firstChild.getViewIdResourceName());
-                    }
                 }
-                int subChildCount = firstChild.getChildCount();
+                updateSecondChildInfo(root, firstChild, secondChild, thirdChild);
 
-//                Log.i(GlobalConstants.LOGTAG, "root.getViewIdResourceName():  " + root.getViewIdResourceName());
-                for (int j = 0; j < subChildCount; j++) {
-
-                    boolean isWindowsID = false;
-                    if (!GlobalConstants.IS_HARDWARE && root.getViewIdResourceName() != null) {
-                        isWindowsID = root.getViewIdResourceName().endsWith(APPTRAYNAVWINDOWFRAMEVIEWIENDTEXT);
-                    } else if (GlobalConstants.IS_HARDWARE){
-                        isWindowsID = true;
-                    }
-
-                    if (isWindowsID) {
-                        secondchild = firstChild.getChild(j);
-                        appTrayIdList[j] = ConverterHelper.getViewIdFromResourceViewId(
-                                secondchild.getViewIdResourceName());
-
-                        appTrayNavNodes.put(
-                                ConverterHelper.getViewIdFromResourceViewId(
-                                        secondchild.getViewIdResourceName()),
-                                secondchild);
-
-                        Log.i(GlobalConstants.LOGTAG, "second child or app tray: " + secondchild.getViewIdResourceName());
-
-                    }
-                }
-//                Rect bounds = getBoundsInternal(child);
             } catch (Exception e) {
                 Log.i(GlobalConstants.LOGTAG, e.toString());
             }
+        }
+    }
 
+    private static void updateSecondChildInfo(NodeInfo root,
+                                              AccessibilityNodeInfoCompat firstChild,
+                                              AccessibilityNodeInfoCompat secondChild,
+                                              AccessibilityNodeInfoCompat thirdChild) {
+        int secondChildCount = firstChild.getChildCount();
+
+        for (int j = 0; j < secondChildCount; j++) {
+            boolean isApptrayContent = true;
+//            if (GlobalConstants.IS_HARDWARE) {
+//                isApptrayContent = true;
+//            }
+//
+//            if (!GlobalConstants.IS_HARDWARE && root.getViewIdResourceName() != null) {
+//                isApptrayContent = root.getViewIdResourceName().endsWith(APPTRAYNAVWINDOWFRAMEVIEWIENDTEXT);
+//            }
+
+            if (isApptrayContent) {
+                secondChild = firstChild.getChild(j);
+
+                String secondResourceIdOrContentDescription = secondChild.getViewIdResourceName();
+
+//              The resource id is null in few screens when tested in different hardwares
+                if (secondResourceIdOrContentDescription == null
+                        && secondChild.getContentDescription() != null) {
+                    secondResourceIdOrContentDescription = secondChild.getContentDescription().toString();
+                }
+
+
+                appTrayIdList[j] = ConverterHelper.getViewIdFromResourceViewId(
+                        secondResourceIdOrContentDescription);
+
+                appTrayNavNodes.put(
+                        ConverterHelper.getViewIdFromResourceViewId(
+                                secondResourceIdOrContentDescription),
+                        secondChild);
+
+
+                Log.i(GlobalConstants.LOGTAG, "\n app tray secondResourceIdOrContentDescription: "
+                        + secondResourceIdOrContentDescription);
+
+                if (secondChild.getViewIdResourceName() == null
+                        && secondChild.getContentDescription() == null) {
+                    Log.i(GlobalConstants.LOGTAG, "secondChild info: " + secondChild);
+                }
+
+                updateThirdChildInfo(root, secondChild, thirdChild);
+            }
+        }
+    }
+
+    private static void updateThirdChildInfo(NodeInfo root,
+                                             AccessibilityNodeInfoCompat secondChild,
+                                             AccessibilityNodeInfoCompat thirdChild) {
+
+        int thirdChildCount = secondChild.getChildCount();
+
+        for (int k = 0; k < thirdChildCount; k++) {
+            thirdChild = secondChild.getChild(k);
+
+            String thirdResourceIdOrContentDescription = thirdChild.getViewIdResourceName();
+
+//          The resource id is null in few screens when tested in different hardwares
+            if (thirdResourceIdOrContentDescription == null
+                    && thirdChild.getContentDescription() != null) {
+                thirdResourceIdOrContentDescription = thirdChild.getContentDescription().toString();
+            }
+
+            Log.i(GlobalConstants.LOGTAG, "thirdChild resourceOrDescriptionName: "
+                    + thirdResourceIdOrContentDescription);
         }
 
-        if (windowsIndex == 2) {
-            windowsIndex = -1;
-        }
 
+    }
+
+    public static String getCurrentPackageName() {
+        return null;
     }
 
     /**
      * sets the focus to the first node
      */
     public static void setFocusToFirstnode() {
-        currentScreenNodes.entrySet().iterator().next().getValue().
-                performAction(AccessibilityNodeInfoCompat.ACTION_FOCUS);
+        if (currentScrNodesHashMap.size() > 0) {
+            for (String key : currentScrNodesHashMap.keySet()) {
+                if (key.contains(WindowIndexPrefix)) {
+                    Log.i(GlobalConstants.LOGTAG, "setFocusToFirstnode: "
+                            + currentScrNodesHashMap.get(key).getViewIdResourceName());
+                    currentScrNodesHashMap.get(key)
+                            .performAction(AccessibilityNodeInfoCompat.ACTION_FOCUS);
+                    GlobalConstants.applicationScreenStartingIndex = ConverterHelper.getIndexByKeyFromHashMap(
+                            currentScrNodesHashMap,
+                            key
+                    );
+                    Log.i(GlobalConstants.LOGTAG, "GlobalConstants.startingIndex: " + GlobalConstants.applicationScreenStartingIndex);
+                    break;
+                }
+            }
+        }
     }
 
     /**
      * Reset all the values
      */
     public static void resetAll() {
+        windowChildSize = new LinkedHashMap();
+        windowRows = new LinkedHashMap<>();
+        boundsTop = new TreeSet<>();
         currentScreenNodes = new HashMap();
+        currentScrNodesHashMap = new LinkedHashMap();
         appTrayNavNodes = new HashMap();
-        appTrayIdList = new String[20];
+        appTrayIdList = new String[100];
         windowsIndex = -1;
+    }
+
+    public static HashMap<String, HashMap<String, AccessibilityNodeInfoCompat>>
+            windowRows;
+
+    //    public static Set<Integer> boundsTop = new TreeSet<>();
+    public static Set<Integer> boundsTop = new TreeSet<>();
+
+    public static void organizeTheNodesForAutoNavigation() {
+        for (String key : NodesBuilder.currentScrNodesHashMap.keySet()) {
+            final Rect bounds = new Rect();
+            NodesBuilder.currentScrNodesHashMap.get(key).getBoundsInScreen(bounds);
+            Log.i(GlobalConstants.LOGTAG, " Key " + key
+                    + "\nboundaries:  " + bounds);
+
+            boundsTop.add(bounds.top);
+        }
+
+        int boundsTopSize = boundsTop.size();
+        for (int top : boundsTop) {
+            HashMap<String, AccessibilityNodeInfoCompat> rowWiseNodes = new LinkedHashMap<>();
+            int boundIndex = 0;
+            char windowIndex = '0';
+//            Log.i(GlobalConstants.LOGTAG, "top value: " + top);
+            for (String key : NodesBuilder.currentScrNodesHashMap.keySet()) {
+                final Rect bounds = new Rect();
+                NodesBuilder.currentScrNodesHashMap.get(key).getBoundsInScreen(bounds);
+                Log.i(GlobalConstants.LOGTAG, " top " + top
+                        + "\nbounds.top:  " + bounds.top
+                        + "\ntop == bounds.top: " + (top == bounds.top));
+                if (top == bounds.top) {
+                    windowIndex = key.charAt(WindowIndexPrefix.length() - 1);
+                    String keyTop = "W" + windowIndex + "R" + boundIndex++;
+                    rowWiseNodes.put(keyTop, NodesBuilder.currentScrNodesHashMap.get(key));
+                }
+            }
+            windowRows.put(String.valueOf(windowIndex), rowWiseNodes);
+        }
+
+        for (String windowRowKey : windowRows.keySet()) {
+            HashMap<String, AccessibilityNodeInfoCompat> rowWiseNodes = windowRows.get(windowRowKey);
+            for (Map.Entry<String, AccessibilityNodeInfoCompat> entry : rowWiseNodes.entrySet()) {
+//                System.out.println(entry.getKey() + " = " + entry.getValue());
+                Log.i(GlobalConstants.LOGTAG, entry.getKey() + " = " + entry.getValue());
+            }
+            Log.i(GlobalConstants.LOGTAG, "\n ");
+        }
+
     }
 }
