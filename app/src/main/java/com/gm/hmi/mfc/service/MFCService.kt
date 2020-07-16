@@ -23,6 +23,7 @@ import com.gm.hmi.mfc.util.ServiceCompatUtils
  */
 public class MFCService : AccessibilityService() {
 
+    private var isNodeFocused = false
     private var prevEventTime: Long = 0
     private lateinit var currentFocusedNode: AccessibilityNodeInfoCompat
     private var previousViewId: String? = ""
@@ -41,6 +42,9 @@ public class MFCService : AccessibilityService() {
         Log.i(GlobalConstants.LOGTAG, "onDestroy onDestroy")
     }
 
+    var rowIndex = -1;
+    var colIndex = -1;
+    private var jumpToNextRow = false
     override fun onServiceConnected() {
         super.onServiceConnected()
 
@@ -129,18 +133,29 @@ public class MFCService : AccessibilityService() {
     }
 
     fun buildTree() {
-
-        if (false) {
-            return;
-        }
         MainNodesBuilder(this).addWindowList(
             WindowInfo.convertWindowArrayOrder(
                 ServiceCompatUtils.getWindows(this)
             )
         )
-        NodesBuilder.setFocusToFirstnode();
+//        NodesBuilder.setFocusToFirstnode();
+//        rotateIndex = GlobalConstants.applicationScreenStartingIndex
 
+        NodesBuilder.setFocusToFirstAppScrrenNode();
+        // assign the intial row and col index
+        colIndex = GlobalConstants.appScreenStartingColIndex
+        rowIndex = GlobalConstants.appScreenStartingRowIndex
         // get the keys of the setHashMap of the nodes to collect the in
+
+        for (windowsRow in NodesBuilder.windowRows) {
+            Log.i(GlobalConstants.LOGTAG, "\nwindowsRow: " + windowsRow.key)
+            for (rowCol in windowsRow.value) {
+                Log.i(
+                    GlobalConstants.LOGTAG, "rowCol: " + rowCol.key
+                            + " coulmn id: " + rowCol.value
+                )
+            }
+        }
     }
 
     override fun onKeyEvent(event: KeyEvent?): Boolean {
@@ -149,7 +164,7 @@ public class MFCService : AccessibilityService() {
             return false
         }
 
-        Log.i(GlobalConstants.LOGTAG, "key code value: " + event?.keyCode.toString())
+//        Log.i(GlobalConstants.LOGTAG, "key code value: " + event?.keyCode.toString())
 
         currentFocusedNode =
             ServiceCompatUtils.getInputFocusedNode(this)
@@ -168,7 +183,8 @@ public class MFCService : AccessibilityService() {
             KeyEvent.KEYCODE_BUTTON_L1, KeyEvent.KEYCODE_COMMA,
             KeyEvent.KEYCODE_NUMPAD_0 -> {
 //                setNextRotate(data_mock, currentFocusedNode.viewIdResourceName, false);
-                setNextRotate(currentFocusedNode.viewIdResourceName, true)
+//                setNextRotate(currentFocusedNode.viewIdResourceName, true)
+                setNextRotate(currentFocusedNode, true);
             }
             KeyEvent.KEYCODE_BUTTON_R1, KeyEvent.KEYCODE_PERIOD,
             KeyEvent.KEYCODE_NUMPAD_DOT -> {
@@ -331,12 +347,113 @@ public class MFCService : AccessibilityService() {
         previousViewId = currentViewId
     }
 
+    private fun setNextRotate(
+        currNode: AccessibilityNodeInfoCompat?,
+        value: Boolean
+    ) {
+        jumpToNextRow = false
+        isNodeFocused = false
+        var loopRowIndex = -1
+        for (windowsRow in NodesBuilder.windowRows) {
+            loopRowIndex++
+//            Log.i(
+//                GlobalConstants.LOGTAG, "LoopRowIndex: " + loopRowIndex
+//                        + " rowIndex: " + rowIndex
+//            )
+            if (loopRowIndex == 0 || loopRowIndex < rowIndex) {
+//                Log.i(
+//                    GlobalConstants.LOGTAG, "returned....."
+//                )
+                continue
+            }
+//            Log.i(GlobalConstants.LOGTAG, "windowsRow: " + windowsRow.key)
+            for (rowCol in windowsRow.value) {
+                // Make sure that it is not reaching the end of the list
+                // and point to the next immediate focus in the next row
+//                if (colIndex >= windowsRow.value.size - 1) {
+//                    // Go to next row and point to first node and set focus.
+//                    rowIndex++
+//                    colIndex = -1;
+//
+//                    Log.i(
+//                        GlobalConstants.LOGTAG, "Next node is not available ....."
+//                                + "rowIndex: " + rowIndex + " colIndex: " + colIndex
+//                    )
+//
+//                    jumpToNextRow = true
+//                    break
+//                }
+//                Log.i(
+//                    GlobalConstants.LOGTAG, "colIndex: " + colIndex
+//                            + "\ncurrNode: " + currNode?.viewIdResourceName
+//                            + "\nGlobalConstants.currentFocusedNode: " + GlobalConstants.currentFocusedNode.viewIdResourceName
+//                )
+
+
+                if (rowCol.value == GlobalConstants.currentFocusedNode || jumpToNextRow) {
+                    if (colIndex >= windowsRow.value.size - 1) {
+                        // Go to next row and point to first node and set focus.
+                        rowIndex++
+                        colIndex = -1;
+
+//                        Log.i(
+//                            GlobalConstants.LOGTAG, "Next node is not available ....."
+//                                    + "rowIndex: " + rowIndex + " colIndex: " + colIndex
+//                        )
+
+                        jumpToNextRow = true
+                        break
+                    }
+
+                    jumpToNextRow = false
+//                    Log.i(
+//                        GlobalConstants.LOGTAG,
+//                        "rowCol: " + rowCol.key + " currentFocusedNode: " + rowCol.value
+//                    )
+                    colIndex++
+                    var nextFocasableNode = ConverterHelper.getElementByIndexFromHashMap(
+                        windowsRow.value,
+                        colIndex
+                    )
+
+                    while (!nextFocasableNode.isEnabled) {
+//                        Log.i(
+//                            GlobalConstants.LOGTAG,
+//                            "Key text is Disabled, so get the next element until it finds which is enabled"
+//                        )
+                        colIndex++
+                        nextFocasableNode = ConverterHelper.getElementByIndexFromHashMap(
+                            windowsRow.value,
+                            colIndex
+                        )
+                    }
+
+                    GlobalConstants.currentFocusedNode = nextFocasableNode
+                    nextFocasableNode.performAction(AccessibilityNodeInfoCompat.ACTION_FOCUS)
+
+//                    Log.i(
+//                        GlobalConstants.LOGTAG,
+//                        "Next node resource id: " + nextFocasableNode.viewIdResourceName
+//                                + "\nnextFocasableNode: " + nextFocasableNode
+//                    )
+
+                    isNodeFocused = true
+                    break
+                }
+            }
+
+            if (isNodeFocused) { // just to block extra looping which is not necessary
+//                Log.i(GlobalConstants.LOGTAG, "Break the main loop as the node is focused...")
+                break
+            }
+        }
+    }
+
     var rotateIndex = -1
     private fun setNextRotate(
         viewIdResourceName: String?,
         value: Boolean
     ) {
-        rotateIndex = GlobalConstants.applicationScreenStartingIndex
         // get the current index and set the next index
 
         if (value) {

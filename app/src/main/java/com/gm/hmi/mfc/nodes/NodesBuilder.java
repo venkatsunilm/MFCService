@@ -23,6 +23,7 @@ import java.util.TreeSet;
  */
 public abstract class NodesBuilder {
 
+    private static boolean isNodeFocused;
     final AccessibilityService service;
     private static final String APPTRAYNAVWINDOWFRAMEVIEWIENDTEXT = "navigation_bar_frame"; // navigation_bar_frame
 
@@ -32,16 +33,18 @@ public abstract class NodesBuilder {
 
     private static int windowListSize = -1;
     private static int depthToReadChildrenLevel = 1;
-//    public static Map<String, AccessibilityNodeInfoCompat> currentScreenNodes_new;
-//    public static Map<String, WindowInfoData> windowInfoDataMap;
-//    public static Map<String, NodeInfoData> nodeInfoDataMap;
-
-    public static HashMap<String, String> windowChildSize ;
+    public static HashMap<String, String> windowChildSize;
     public static HashMap<String, AccessibilityNodeInfoCompat> currentScrNodesHashMap;
-
     public static String[] appTrayIdList;
     public static int windowsIndex = -1;
     private static String WindowIndexPrefix = "Window#1";
+    private static String firstFocusKeyCol = "W1#C0";
+    private static String firstFocusKeyRow = "W1#R1";
+    public static HashMap<String, HashMap<String, AccessibilityNodeInfoCompat>> windowRows;
+    public static Set<Integer> boundsTop = new TreeSet<>();
+    private static int boundIndex = 0;
+    private static char wIndx = '0';
+    private static int boundTopLoopIndex = -1;
 
     NodesBuilder(AccessibilityService service) {
         this.service = service;
@@ -55,7 +58,6 @@ public abstract class NodesBuilder {
     public static void getNodes(NodeInfo root, int windowsCount) {
         windowsIndex++;
         windowListSize = windowsCount;
-
         Log.i(GlobalConstants.LOGTAG,
                 " \n windowsIndex " + windowsIndex
                         + " \n getViewIdResourceName : " + root.getViewIdResourceName()
@@ -67,10 +69,7 @@ public abstract class NodesBuilder {
         updateChildsInfo(root, windowsIndex);
 //        windowChildSize.put(String.valueOf(windowsIndex), String.valueOf(indexCheck));
         Log.i(GlobalConstants.LOGTAG, " windowChildSize: " + windowChildSize);
-
         indexCheck = 0;
-
-
         if (windowsIndex == windowListSize - 1) {
             windowsIndex = -1;
         }
@@ -121,27 +120,24 @@ public abstract class NodesBuilder {
             String keyName = "Window#" + windowsIndex + "#"
                     + i + "#"
                     + ConverterHelper.getViewIdFromResourceViewId(resourceIdOrContentDescription);
+//            Log.i(GlobalConstants.LOGTAG, " keyName: " + keyName
+//                    + "  child.isFocusable: " + child.isFocusable());
 
             windowChildSize.put(String.valueOf(windowsIndex), String.valueOf(i));
-
-//            Log.i(GlobalConstants.LOGTAG, "Key Name: " + keyName);
-
-//            nodeInfoData = new NodeInfoData(keyName, child);
-//            nodeInfoDataMap.put(keyName, nodeInfoData);
-
-//            WindowInfoData windowInfoData = new WindowInfoData();
-
-            childLevelIndex++;
+//            Log.i(GlobalConstants.LOGTAG, " childLevelIndex: " + childLevelIndex
+//            + " depthToReadChildrenLevel: "+ depthToReadChildrenLevel);
 
             if (childLevelIndex < depthToReadChildrenLevel
                     && child.isFocusable() && child.isImportantForAccessibility()) {
                 currentScreenNodes.put(keyName, child);
                 currentScrNodesHashMap.put(keyName, child);
-                Log.i(GlobalConstants.LOGTAG, " keyName: " + keyName);
+                Log.i(GlobalConstants.LOGTAG, " inside keyName: " + keyName);
             }
 
+            childLevelIndex++;
+
             updateChildsInfo(child, windowsIndex);
-            childLevelIndex = -1;
+            childLevelIndex = 0;
         }
         indexCheck++;
     }
@@ -284,6 +280,41 @@ public abstract class NodesBuilder {
         }
     }
 
+    public static void setFocusToFirstAppScrrenNode() {
+        isNodeFocused = false;
+        for (String windowRowKey : windowRows.keySet()) {
+            Log.i(GlobalConstants.LOGTAG, "windowRowKey: " + windowRowKey);
+            HashMap<String, AccessibilityNodeInfoCompat> rowWiseNodes = windowRows.get(windowRowKey);
+            for (Map.Entry<String, AccessibilityNodeInfoCompat> entry : rowWiseNodes.entrySet()) {
+                Log.i(GlobalConstants.LOGTAG, entry.getKey() + " = " + entry.getValue());
+                String key = entry.getKey();
+                if (windowRowKey.contains(firstFocusKeyRow) && key.contains(firstFocusKeyCol)) {
+                    Log.i(GlobalConstants.LOGTAG, "setFocusToFirstnode: "
+                            + rowWiseNodes.get(key).getViewIdResourceName());
+                    rowWiseNodes.get(key).performAction(AccessibilityNodeInfoCompat.ACTION_FOCUS);
+
+                    GlobalConstants.currentFocusedNode = rowWiseNodes.get(key);
+
+                    GlobalConstants.appScreenStartingRowIndex =
+                            ConverterHelper.getIndexByKeyFromHashMap(windowRows, windowRowKey);
+                    Log.i(GlobalConstants.LOGTAG, "GlobalConstants.appScreenStartingRowIndex: "
+                            + GlobalConstants.appScreenStartingRowIndex);
+
+                    GlobalConstants.appScreenStartingColIndex =
+                            ConverterHelper.getIndexByKeyFromHashMap(rowWiseNodes, key);
+                    Log.i(GlobalConstants.LOGTAG, "GlobalConstants.appScreenStartingColIndex: "
+                            + GlobalConstants.appScreenStartingColIndex);
+                    isNodeFocused = true;
+                    break;
+                }
+            }
+            if (isNodeFocused) {
+                break;
+            }
+            Log.i(GlobalConstants.LOGTAG, "\n ");
+        }
+    }
+
     /**
      * Reset all the values
      */
@@ -298,18 +329,15 @@ public abstract class NodesBuilder {
         windowsIndex = -1;
     }
 
-    public static HashMap<String, HashMap<String, AccessibilityNodeInfoCompat>>
-            windowRows;
-
-    //    public static Set<Integer> boundsTop = new TreeSet<>();
-    public static Set<Integer> boundsTop = new TreeSet<>();
 
     public static void organizeTheNodesForAutoNavigation() {
+        boundIndex = 0;
+        boundTopLoopIndex = -1;
         for (String key : NodesBuilder.currentScrNodesHashMap.keySet()) {
             final Rect bounds = new Rect();
             NodesBuilder.currentScrNodesHashMap.get(key).getBoundsInScreen(bounds);
-            Log.i(GlobalConstants.LOGTAG, " Key " + key
-                    + "\nboundaries:  " + bounds);
+//            Log.i(GlobalConstants.LOGTAG, " Key " + key
+//                    + "\nboundaries:  " + bounds);
 
             boundsTop.add(bounds.top);
         }
@@ -317,32 +345,19 @@ public abstract class NodesBuilder {
         int boundsTopSize = boundsTop.size();
         for (int top : boundsTop) {
             HashMap<String, AccessibilityNodeInfoCompat> rowWiseNodes = new LinkedHashMap<>();
-            int boundIndex = 0;
-            char windowIndex = '0';
-//            Log.i(GlobalConstants.LOGTAG, "top value: " + top);
+            boundIndex = 0;
+            boundTopLoopIndex++;
             for (String key : NodesBuilder.currentScrNodesHashMap.keySet()) {
                 final Rect bounds = new Rect();
                 NodesBuilder.currentScrNodesHashMap.get(key).getBoundsInScreen(bounds);
-                Log.i(GlobalConstants.LOGTAG, " top " + top
-                        + "\nbounds.top:  " + bounds.top
-                        + "\ntop == bounds.top: " + (top == bounds.top));
                 if (top == bounds.top) {
-                    windowIndex = key.charAt(WindowIndexPrefix.length() - 1);
-                    String keyTop = "W" + windowIndex + "R" + boundIndex++;
+                    wIndx = key.charAt(WindowIndexPrefix.length() - 1);
+                    String keyTop = "W" + wIndx + "#" + "C" + boundIndex++;
                     rowWiseNodes.put(keyTop, NodesBuilder.currentScrNodesHashMap.get(key));
+                    Log.i(GlobalConstants.LOGTAG, "keyTop: " + keyTop);
                 }
             }
-            windowRows.put(String.valueOf(windowIndex), rowWiseNodes);
+            windowRows.put("W" + String.valueOf(wIndx) + "#" + "R" + boundTopLoopIndex, rowWiseNodes);
         }
-
-        for (String windowRowKey : windowRows.keySet()) {
-            HashMap<String, AccessibilityNodeInfoCompat> rowWiseNodes = windowRows.get(windowRowKey);
-            for (Map.Entry<String, AccessibilityNodeInfoCompat> entry : rowWiseNodes.entrySet()) {
-//                System.out.println(entry.getKey() + " = " + entry.getValue());
-                Log.i(GlobalConstants.LOGTAG, entry.getKey() + " = " + entry.getValue());
-            }
-            Log.i(GlobalConstants.LOGTAG, "\n ");
-        }
-
     }
 }

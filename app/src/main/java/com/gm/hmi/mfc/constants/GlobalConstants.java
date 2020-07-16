@@ -14,4 +14,8 @@ public class GlobalConstants {
     public static final String LAUNCHER_PACKAGE_NAME = "com.google.android.apps.moddednexuslauncher";
     public static boolean isFocusOnDummyView;
     public static int applicationScreenStartingIndex;
+    public static int appScreenStartingColIndex;
+    public static int appScreenStartingRowIndex;
+    // forcefully taken this extra, as we have duel focus issue
+    public static AccessibilityNodeInfoCompat currentFocusedNode;
 }
