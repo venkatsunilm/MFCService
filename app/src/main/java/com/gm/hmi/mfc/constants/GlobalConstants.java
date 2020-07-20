@@ -13,7 +13,10 @@ public class GlobalConstants {
     public static final String SYSTEM_PACKAGE_NAME = "com.android.systemui";
     public static final String LAUNCHER_PACKAGE_NAME = "com.google.android.apps.moddednexuslauncher";
     public static boolean isFocusOnDummyView;
+
     public static int applicationScreenStartingIndex;
+    public static int totalItems;
+
     public static int appScreenStartingColIndex;
     public static int appScreenStartingRowIndex;
     // forcefully taken this extra, as we have duel focus issue

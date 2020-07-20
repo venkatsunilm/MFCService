@@ -18,8 +18,8 @@ public class EventActions implements EventUpdator.onScreenUpdateListener {
         if (event != null) {
             int eventType = event.getEventType();
             if (eventType == AccessibilityEvent.TYPE_WINDOW_STATE_CHANGED
-                    /*|| eventType == AccessibilityEvent.TYPE_WINDOW_CONTENT_CHANGED
-                || eventType == AccessibilityEvent.TYPE_VIEW_SCROLLED*/) {
+                    /*|| eventType == AccessibilityEvent.TYPE_WINDOW_CONTENT_CHANGED*/
+                    || eventType == AccessibilityEvent.TYPE_VIEW_SCROLLED) {
                 MFCService.instance.buildTree();
             }
         }

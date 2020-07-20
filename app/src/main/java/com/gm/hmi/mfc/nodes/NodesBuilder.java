@@ -35,11 +35,12 @@ public abstract class NodesBuilder {
     private static int depthToReadChildrenLevel = 1;
     public static HashMap<String, String> windowChildSize;
     public static HashMap<String, AccessibilityNodeInfoCompat> currentScrNodesHashMap;
+    public static HashMap<String, AccessibilityNodeInfoCompat> tempCurrentScrNodesHashMap;
     public static String[] appTrayIdList;
     public static int windowsIndex = -1;
     private static String WindowIndexPrefix = "Window#1";
     private static String firstFocusKeyCol = "W1#C0";
-    private static String firstFocusKeyRow = "W1#R1";
+    private static String firstFocusKeyRow = "W1#R1";// W1#R1 for pixel AOSP phone
     public static HashMap<String, HashMap<String, AccessibilityNodeInfoCompat>> windowRows;
     public static Set<Integer> boundsTop = new TreeSet<>();
     private static int boundIndex = 0;
@@ -93,7 +94,7 @@ public abstract class NodesBuilder {
             return;
         }
 
-//        Log.i(GlobalConstants.LOGTAG, "childCount: " + childCount);
+        Log.i(GlobalConstants.LOGTAG, "childCount &&&&&&&&&&&&&&&&&: " + childCount);
         for (int i = 0; i < childCount; i++) {
             child = root.getChild(i);
             if (child == null) {
@@ -120,15 +121,19 @@ public abstract class NodesBuilder {
             String keyName = "Window#" + windowsIndex + "#"
                     + i + "#"
                     + ConverterHelper.getViewIdFromResourceViewId(resourceIdOrContentDescription);
-//            Log.i(GlobalConstants.LOGTAG, " keyName: " + keyName
-//                    + "  child.isFocusable: " + child.isFocusable());
+//            Log.i(GlobalConstants.LOGTAG, " outside keyName: " + keyName
+//                    + "  \nchild: " + child);
 
-            windowChildSize.put(String.valueOf(windowsIndex), String.valueOf(i));
+//            windowChildSize.put(String.valueOf(windowsIndex), String.valueOf(i));
 //            Log.i(GlobalConstants.LOGTAG, " childLevelIndex: " + childLevelIndex
-//            + " depthToReadChildrenLevel: "+ depthToReadChildrenLevel);
+//                    + " depthToReadChildrenLevel: " + depthToReadChildrenLevel
+//                    + " childLevelIndex < depthToReadChildrenLevel: " + (childLevelIndex < depthToReadChildrenLevel));
 
             if (childLevelIndex < depthToReadChildrenLevel
-                    && child.isFocusable() && child.isImportantForAccessibility()) {
+                    && child.isFocusable() && child.isImportantForAccessibility()
+                    && !resourceIdOrContentDescription.contains("NOT_AVAILABLE#")
+                    && !child.getClassName().toString().contains("RecyclerView")
+                    && !child.getViewIdResourceName().contains("id/car_nav_button_icon")) {
                 currentScreenNodes.put(keyName, child);
                 currentScrNodesHashMap.put(keyName, child);
                 Log.i(GlobalConstants.LOGTAG, " inside keyName: " + keyName);
@@ -136,8 +141,12 @@ public abstract class NodesBuilder {
 
             childLevelIndex++;
 
+            Log.i(GlobalConstants.LOGTAG, "\n .... next ");
+
             updateChildsInfo(child, windowsIndex);
-            childLevelIndex = 0;
+            childLevelIndex = -1;
+
+            Log.i(GlobalConstants.LOGTAG, "\n ******************** ");
         }
         indexCheck++;
     }
@@ -264,7 +273,8 @@ public abstract class NodesBuilder {
     public static void setFocusToFirstnode() {
         if (currentScrNodesHashMap.size() > 0) {
             for (String key : currentScrNodesHashMap.keySet()) {
-                if (key.contains(WindowIndexPrefix)) {
+                Log.i(GlobalConstants.LOGTAG, " currentScrNodesHashMap key: " + key);
+                if (key.startsWith(WindowIndexPrefix)) {
                     Log.i(GlobalConstants.LOGTAG, "setFocusToFirstnode: "
                             + currentScrNodesHashMap.get(key).getViewIdResourceName());
                     currentScrNodesHashMap.get(key)
@@ -343,18 +353,24 @@ public abstract class NodesBuilder {
         }
 
         int boundsTopSize = boundsTop.size();
+        tempCurrentScrNodesHashMap = currentScrNodesHashMap;
+        currentScrNodesHashMap = new LinkedHashMap<>();
         for (int top : boundsTop) {
             HashMap<String, AccessibilityNodeInfoCompat> rowWiseNodes = new LinkedHashMap<>();
             boundIndex = 0;
             boundTopLoopIndex++;
-            for (String key : NodesBuilder.currentScrNodesHashMap.keySet()) {
+            for (String key : tempCurrentScrNodesHashMap.keySet()) {
                 final Rect bounds = new Rect();
-                NodesBuilder.currentScrNodesHashMap.get(key).getBoundsInScreen(bounds);
+                tempCurrentScrNodesHashMap.get(key).getBoundsInScreen(bounds);
                 if (top == bounds.top) {
                     wIndx = key.charAt(WindowIndexPrefix.length() - 1);
                     String keyTop = "W" + wIndx + "#" + "C" + boundIndex++;
-                    rowWiseNodes.put(keyTop, NodesBuilder.currentScrNodesHashMap.get(key));
-                    Log.i(GlobalConstants.LOGTAG, "keyTop: " + keyTop);
+                    rowWiseNodes.put(keyTop, tempCurrentScrNodesHashMap.get(key));
+                    currentScrNodesHashMap.put(key, tempCurrentScrNodesHashMap.get(key));
+                    Log.i(GlobalConstants.LOGTAG, "KeyTop: " + keyTop);
+                    Log.i(GlobalConstants.LOGTAG, key + key
+                            + "\n tempCurrentScrNodesHashMap.get(key): " + tempCurrentScrNodesHashMap.get(key).getViewIdResourceName());
+
                 }
             }
             windowRows.put("W" + String.valueOf(wIndx) + "#" + "R" + boundTopLoopIndex, rowWiseNodes);
