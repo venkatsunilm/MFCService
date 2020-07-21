@@ -217,6 +217,14 @@ public class MockData {
 
 //        endregion
 
+        navigationMap.put("app_item",
+                new NavigationHelperData(
+                        "app_item", "app_item",
+                        "exit_button_container", "grid_nav",
+                        "app_item", "app_item"));
+
+
+
     }
 }
 

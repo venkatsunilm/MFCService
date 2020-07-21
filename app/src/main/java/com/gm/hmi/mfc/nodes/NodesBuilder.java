@@ -343,9 +343,9 @@ public abstract class NodesBuilder {
     public static void organizeTheNodesForAutoNavigation() {
         boundIndex = 0;
         boundTopLoopIndex = -1;
-        for (String key : NodesBuilder.currentScrNodesHashMap.keySet()) {
+        for (String key : currentScrNodesHashMap.keySet()) {
             final Rect bounds = new Rect();
-            NodesBuilder.currentScrNodesHashMap.get(key).getBoundsInScreen(bounds);
+            currentScrNodesHashMap.get(key).getBoundsInScreen(bounds);
 //            Log.i(GlobalConstants.LOGTAG, " Key " + key
 //                    + "\nboundaries:  " + bounds);
 
@@ -353,6 +353,7 @@ public abstract class NodesBuilder {
         }
 
         int boundsTopSize = boundsTop.size();
+        tempCurrentScrNodesHashMap = new LinkedHashMap<>();
         tempCurrentScrNodesHashMap = currentScrNodesHashMap;
         currentScrNodesHashMap = new LinkedHashMap<>();
         for (int top : boundsTop) {
@@ -368,8 +369,8 @@ public abstract class NodesBuilder {
                     rowWiseNodes.put(keyTop, tempCurrentScrNodesHashMap.get(key));
                     currentScrNodesHashMap.put(key, tempCurrentScrNodesHashMap.get(key));
                     Log.i(GlobalConstants.LOGTAG, "KeyTop: " + keyTop);
-                    Log.i(GlobalConstants.LOGTAG, key + key
-                            + "\n tempCurrentScrNodesHashMap.get(key): " + tempCurrentScrNodesHashMap.get(key).getViewIdResourceName());
+                    Log.i(GlobalConstants.LOGTAG, "key: " + key
+                            + " == " + tempCurrentScrNodesHashMap.get(key).getViewIdResourceName());
 
                 }
             }

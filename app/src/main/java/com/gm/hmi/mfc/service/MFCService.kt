@@ -206,7 +206,7 @@ public class MFCService : AccessibilityService() {
             }
             KeyEvent.KEYCODE_DPAD_UP, KeyEvent.KEYCODE_W, 2604,
             KeyEvent.KEYCODE_NUMPAD_9 -> {
-                if (GlobalConstants.isFocusOnSystemAppTray) {
+                if (false && GlobalConstants.isFocusOnSystemAppTray) {
                     GlobalConstants.isFocusOnSystemAppTray = false
                     GlobalConstants.isFocusOnDummyView = false
 
@@ -223,17 +223,21 @@ public class MFCService : AccessibilityService() {
                         ?.performAction(AccessibilityNodeInfoCompat.ACTION_FOCUS)
                     return super.onKeyEvent(event)
                 }
-                setNext(data_mock, currentFocusedNode.viewIdResourceName, 2)
+//                setNext(data_mock, currentFocusedNode.viewIdResourceName, 2)
+                setNextDirection(data_mock, currentFocusedNode, 2)
             }
             KeyEvent.KEYCODE_DPAD_DOWN, KeyEvent.KEYCODE_Z, 2605,
             KeyEvent.KEYCODE_NUMPAD_7 -> {
 //                currentFocusedNode.refresh()
 //                currentFocusedNode.recycle()
-                setNext(data_mock, currentFocusedNode.viewIdResourceName, 3)
+//                setNext(data_mock, currentFocusedNode.viewIdResourceName, 3)
+                setNextDirection(data_mock, currentFocusedNode, 3)
+
             }
         }
         return super.onKeyEvent(event)
     }
+
 
     /**
      * This method sets the navigation directions dynamically
@@ -259,12 +263,13 @@ public class MFCService : AccessibilityService() {
             }
         }
 
+
         // This logic works only for the navigation down button for CSM it will be on LEFT
         Log.i(
             GlobalConstants.LOGTAG,
             "Current View ID: " + currentViewId + " directionIndex: " + directionIndex +
-                    "GlobalConstants.isFocusOnSystemAppTray: " + GlobalConstants.isFocusOnSystemAppTray +
-                    "NodesBuilder.appTrayIdList.contains(currentViewId): " + NodesBuilder.appTrayIdList.contains(
+                    " GlobalConstants.isFocusOnSystemAppTray: " + GlobalConstants.isFocusOnSystemAppTray +
+                    "\nNodesBuilder.appTrayIdList.contains(currentViewId): " + NodesBuilder.appTrayIdList.contains(
                 currentViewId
             )
         )
@@ -528,7 +533,49 @@ public class MFCService : AccessibilityService() {
         }
     }
 
+
     var rotateIndex = -1
+    private fun setNextDirection(
+        data: Map<String, NavigationHelperData>,
+        currNode: AccessibilityNodeInfoCompat?,
+        directionIndex: Int
+    ) {
+
+        val navigationHelperData =
+            data.get(ConverterHelper.getViewIdFromResourceViewId(currNode?.viewIdResourceName))
+        var currentViewId = navigationHelperData?.left
+        when (directionIndex) {
+            1 -> {
+                currentViewId = navigationHelperData?.right.toString()
+            }
+            2 -> {
+                currentViewId = navigationHelperData?.up.toString()
+            }
+            3 -> {
+                currentViewId = navigationHelperData?.down.toString()
+            }
+        }
+
+        for (item in NodesBuilder.currentScrNodesHashMap) {
+            if (item.key.contains(currentViewId!!)) {
+                Log.i(
+                    GlobalConstants.LOGTAG, "item.key.toString() : " + item.key.toString()
+                )
+                item.value.performAction(AccessibilityNodeInfoCompat.ACTION_FOCUS)
+                rotateIndex = ConverterHelper.getIndexByKeyFromHashMap(
+                    NodesBuilder.currentScrNodesHashMap,
+                    item.key.toString()
+                )
+            }
+        }
+
+        Log.i(
+            GlobalConstants.LOGTAG, "currentViewId: " + currentViewId
+                    + " rotateIndex: " + rotateIndex
+        )
+    }
+
+
     private fun setNextRotate(
         viewIdResourceName: String?,
         value: Boolean
@@ -578,9 +625,8 @@ public class MFCService : AccessibilityService() {
 
         Log.i(
             GlobalConstants.LOGTAG, "rotateIndex: " + rotateIndex
-                    + " keyText: " + node
+                    + " node: " + node
         )
-
 
         node.performAction(AccessibilityNodeInfoCompat.ACTION_FOCUS)
 //        NodesBuilder.currentScrNodesHashMap["Window#1#1#app_item"]?.performAction(AccessibilityNodeInfoCompat.ACTION_FOCUS)
